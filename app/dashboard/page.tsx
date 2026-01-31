@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, CSSProperties } from 'react';
-import { Search, Book, User, Calendar, Building2, Plus, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, Book, User, Calendar, Building2, Plus, X, LogOut } from 'lucide-react';
 
 interface BookData {
   id: number;
@@ -17,6 +18,7 @@ const BookSearch = () => {
     { id: 1, nome: "O Senhor dos Anéis", autor: "J.R.R. Tolkien", ano: 1954, editora: "Allen & Unwin" },
     { id: 2, nome: "1984", autor: "George Orwell", ano: 1949, editora: "Secker & Warburg" },
   ]);
+  const router = useRouter();
 
   const [busca, setBusca] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,6 +34,13 @@ const BookSearch = () => {
   const livrosFiltrados = livros.filter(livro => 
     livro.nome.toLowerCase().includes(busca.toLowerCase())
   );
+
+  // Função de Logout
+  const handleLogout = () => {
+    // Aqui no futuro você limparia tokens (JWT) ou cookies de sessão
+    console.log('Utilizador saiu do sistema');
+    router.push('/'); // Redireciona para a página de login (raiz)
+  };
 
   const handleAddBook = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +60,18 @@ const BookSearch = () => {
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-        <h1 style={styles.pageTitle}>Consulta de Acervo</h1>
+        <div style={styles.topBar}>
+          <h1 style={styles.pageTitle}>Consulta de Acervo</h1>
+          <button 
+            onClick={handleLogout} 
+            style={styles.logoutButton}
+            title="Sair do sistema"
+          >
+            <LogOut size={20} />
+            <span>Sair</span>
+          </button>
+        </div>
+
         <div style={styles.searchBar}>
           <Search size={20} style={styles.searchIcon} />
           <input
@@ -222,7 +242,26 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 'bold',
     cursor: 'pointer',
     marginTop: '1rem'
-  }
+  },
+  topBar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '1rem'
+  },
+  logoutButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    backgroundColor: '#fee2e2', // Vermelho muito claro
+    color: '#dc2626', // Vermelho
+    border: 'none',
+    padding: '0.5rem 1rem',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    transition: 'background 0.2s'
+  },
 };
 
 export default BookSearch;
