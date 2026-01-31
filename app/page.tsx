@@ -1,8 +1,8 @@
-import BookSearch from "./bookSearch";
+import BookSearch from "./dashboard/page";
 import Login from "./login";
 
 export default function Home() {
   return (
-    <BookSearch/>
+    <Login/>
   );
 }
