@@ -17,6 +17,12 @@ const BookSearch = () => {
   const [livros, setLivros] = useState<BookData[]>([
     { id: 1, nome: "O Senhor dos Anéis", autor: "J.R.R. Tolkien", ano: 1954, editora: "Allen & Unwin" },
     { id: 2, nome: "1984", autor: "George Orwell", ano: 1949, editora: "Secker & Warburg" },
+    { id: 3, nome: "Dom Casmurro", autor: "Machado de Assis", ano: 1899, editora: "Garnier" },
+    { id: 4, nome: "O Cortiço", autor: "Aluísio Azevedo", ano: 1890, editora: "Garnier" },
+    { id: 5, nome: "Grande Sertão: Veredas", autor: "Guimarães Rosa", ano: 1956, editora: "Instituto Nacional do Livro" },
+    { id: 6, nome: "Memórias Póstumas de Brás Cubas", autor: "Machado de Assis", ano: 1881, editora: "Garnier" },
+    { id: 7, nome: "O Auto da Compadecida", autor: "Ariano Suassuna", ano: 1955, editora: "Agir" },
+    { id: 8, nome: "Capitães da Areia", autor: "Jorge Amado", ano: 1937, editora: "Globo Editora" },
   ]);
   const router = useRouter();
 
@@ -44,11 +50,18 @@ const BookSearch = () => {
 
   const handleAddBook = (e: React.FormEvent) => {
     e.preventDefault();
+    const anoParseado = parseInt(novoLivro.ano, 10);
+    
+    if (isNaN(anoParseado)) {
+      alert('Por favor, insira um ano válido');
+      return;
+    }
+
     const item: BookData = {
       id: Date.now(), // Gera um ID único simples
       nome: novoLivro.nome,
       autor: novoLivro.autor,
-      ano: parseInt(novoLivro.ano),
+      ano: anoParseado,
       editora: novoLivro.editora
     };
 
