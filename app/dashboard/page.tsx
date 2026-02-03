@@ -28,7 +28,7 @@ const BookSearch = () => {
 
   const [busca, setBusca] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+
   // Estados para o formulário do novo livro
   const [novoLivro, setNovoLivro] = useState({
     nome: '',
@@ -37,7 +37,7 @@ const BookSearch = () => {
     editora: ''
   });
 
-  const livrosFiltrados = livros.filter(livro => 
+  const livrosFiltrados = livros.filter(livro =>
     livro.nome.toLowerCase().includes(busca.toLowerCase())
   );
 
@@ -51,7 +51,7 @@ const BookSearch = () => {
   const handleAddBook = (e: React.FormEvent) => {
     e.preventDefault();
     const anoParseado = parseInt(novoLivro.ano, 10);
-    
+
     if (isNaN(anoParseado)) {
       alert('Por favor, insira um ano válido');
       return;
@@ -75,8 +75,8 @@ const BookSearch = () => {
       <header style={styles.header}>
         <div style={styles.topBar}>
           <h1 style={styles.pageTitle}>Consulta de Acervo</h1>
-          <button 
-            onClick={handleLogout} 
+          <button
+            onClick={handleLogout}
             style={styles.logoutButton}
             title="Sair do sistema"
           >
@@ -112,8 +112,8 @@ const BookSearch = () => {
       </main>
 
       {/* Botão Flutuante (FAB) */}
-      <button 
-        style={styles.fab} 
+      <button
+        style={styles.fab}
         onClick={() => setIsModalOpen(true)}
         title="Adicionar novo livro"
       >
@@ -125,41 +125,41 @@ const BookSearch = () => {
         <div style={styles.modalOverlay}>
           <div style={styles.modalContent}>
             <div style={styles.modalHeader}>
-              <h3 style={{color: '#1f2937'}}>Cadastrar Novo Livro</h3>
+              <h3 style={{ color: '#1f2937' }}>Cadastrar Novo Livro</h3>
               <button onClick={() => setIsModalOpen(false)} style={styles.closeButton}>
                 <X size={24} />
               </button>
             </div>
-            
+
             <form onSubmit={handleAddBook} style={styles.modalForm}>
-              <input 
-                placeholder="Nome do Livro" 
-                required 
+              <input
+                placeholder="Nome do Livro"
+                required
                 style={styles.modalInput}
                 value={novoLivro.nome}
-                onChange={e => setNovoLivro({...novoLivro, nome: e.target.value})}
+                onChange={e => setNovoLivro({ ...novoLivro, nome: e.target.value })}
               />
-              <input 
-                placeholder="Autor" 
-                required 
+              <input
+                placeholder="Autor"
+                required
                 style={styles.modalInput}
                 value={novoLivro.autor}
-                onChange={e => setNovoLivro({...novoLivro, autor: e.target.value})}
+                onChange={e => setNovoLivro({ ...novoLivro, autor: e.target.value })}
               />
-              <input 
-                placeholder="Ano" 
-                type="number" 
-                required 
+              <input
+                placeholder="Ano"
+                type="number"
+                required
                 style={styles.modalInput}
                 value={novoLivro.ano}
-                onChange={e => setNovoLivro({...novoLivro, ano: e.target.value})}
+                onChange={e => setNovoLivro({ ...novoLivro, ano: e.target.value })}
               />
-              <input 
-                placeholder="Editora" 
-                required 
+              <input
+                placeholder="Editora"
+                required
                 style={styles.modalInput}
                 value={novoLivro.editora}
-                onChange={e => setNovoLivro({...novoLivro, editora: e.target.value})}
+                onChange={e => setNovoLivro({ ...novoLivro, editora: e.target.value })}
               />
               <button type="submit" style={styles.saveButton}>Salvar Livro</button>
             </form>
