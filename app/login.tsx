@@ -18,7 +18,7 @@ const Login = () => {
       console.log('Login efetuado no Next.js');
       
       // router.push faz o redirecionamento para a pasta /dashboard
-      router.push('/dashboard'); 
+      router.push('/livros'); 
     } else {
       console.log('Preencha todos os campos');
     }

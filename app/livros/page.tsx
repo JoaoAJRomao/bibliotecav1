@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState, CSSProperties } from 'react';
+import { NextResponse } from 'next/server';
+import { db } from '../src/index';
+import { booksTable } from '../src/db/schema';
 import { useRouter } from 'next/navigation';
 import { Search, Book, User, Calendar, Building2, Plus, X, LogOut } from 'lucide-react';
 

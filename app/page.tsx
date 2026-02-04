@@ -1,4 +1,4 @@
-import BookSearch from "./dashboard/page";
+import BookSearch from "./livros/page";
 import Login from "./login";
 
 export default function Home() {
