@@ -1,6 +1,5 @@
 'use client';
-
-import React, { useState, CSSProperties } from 'react';
+import React, { useState, CSSProperties, useEffect } from 'react';
 import { NextResponse } from 'next/server';
 import { db } from '../src/index';
 import { booksTable } from '../src/db/schema';
@@ -9,24 +8,15 @@ import { Search, Book, User, Calendar, Building2, Plus, X, LogOut } from 'lucide
 
 interface BookData {
   id: number;
-  nome: string;
-  autor: string;
-  ano: number;
-  editora: string;
+  title: string;
+  author: string;
+  year: number;
+  publisher: string;
 }
 
 const BookSearch = () => {
   // Agora a lista de livros está no estado para podermos adicionar novos
-  const [livros, setLivros] = useState<BookData[]>([
-    { id: 1, nome: "O Senhor dos Anéis", autor: "J.R.R. Tolkien", ano: 1954, editora: "Allen & Unwin" },
-    { id: 2, nome: "1984", autor: "George Orwell", ano: 1949, editora: "Secker & Warburg" },
-    { id: 3, nome: "Dom Casmurro", autor: "Machado de Assis", ano: 1899, editora: "Garnier" },
-    { id: 4, nome: "O Cortiço", autor: "Aluísio Azevedo", ano: 1890, editora: "Garnier" },
-    { id: 5, nome: "Grande Sertão: Veredas", autor: "Guimarães Rosa", ano: 1956, editora: "Instituto Nacional do Livro" },
-    { id: 6, nome: "Memórias Póstumas de Brás Cubas", autor: "Machado de Assis", ano: 1881, editora: "Garnier" },
-    { id: 7, nome: "O Auto da Compadecida", autor: "Ariano Suassuna", ano: 1955, editora: "Agir" },
-    { id: 8, nome: "Capitães da Areia", autor: "Jorge Amado", ano: 1937, editora: "Globo Editora" },
-  ]);
+  const [livros, setLivros] = useState<BookData[]>([]);
   const router = useRouter();
 
   const [busca, setBusca] = useState('');
@@ -40,18 +30,32 @@ const BookSearch = () => {
     editora: ''
   });
 
+  useEffect(() => {
+    const carregarLivros = async () => {
+      try {
+        const response = await fetch('/api/livros');
+        const data = await response.json();
+        setLivros(data);
+      } catch (error) {
+        console.error("Falha ao carregar livros:", error);
+      }
+    };
+
+    carregarLivros();
+  }, []);
+
   const livrosFiltrados = livros.filter(livro =>
-    livro.nome.toLowerCase().includes(busca.toLowerCase())
+    livro.title.toLowerCase().includes(busca.toLowerCase())
   );
 
-  // Função de Logout
+
   const handleLogout = () => {
     // Aqui no futuro você limparia tokens (JWT) ou cookies de sessão
     console.log('Utilizador saiu do sistema');
     router.push('/'); // Redireciona para a página de login (raiz)
   };
 
-  const handleAddBook = (e: React.FormEvent) => {
+  const handleAddBook = async (e: React.FormEvent) => {
     e.preventDefault();
     const anoParseado = parseInt(novoLivro.ano, 10);
 
@@ -60,17 +64,35 @@ const BookSearch = () => {
       return;
     }
 
-    const item: BookData = {
-      id: Date.now(), // Gera um ID único simples
-      nome: novoLivro.nome,
-      autor: novoLivro.autor,
-      ano: anoParseado,
-      editora: novoLivro.editora
+    const item = {
+      title: novoLivro.nome,
+      author: novoLivro.autor,
+      year: anoParseado,
+      publisher: novoLivro.editora
     };
 
-    setLivros([...livros, item]); // Adiciona o novo livro à lista existente
-    setIsModalOpen(false); // Fecha o modal
-    setNovoLivro({ nome: '', autor: '', ano: '', editora: '' }); // Limpa o formulário
+    try {
+      const response = await fetch('/api/livros', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(item),
+      });
+
+      if (response.ok) {
+        const livroCriado = await response.json();
+        setLivros((prev) => [...prev, livroCriado]);
+        setIsModalOpen(false);
+        setNovoLivro({ nome: '', autor: '', ano: '', editora: '' });
+        alert('Livro salvo com sucesso no Postgres!');
+      } else {
+        alert('Erro ao salvar no banco de dados.');
+      }
+    } catch (error) {
+      console.error("Erro na requisição:", error);
+      alert('Erro de conexão com o servidor.');
+    }
   };
 
   return (
@@ -106,10 +128,10 @@ const BookSearch = () => {
             <div style={styles.bookIconWrapper}>
               <Book size={32} color="#2563eb" />
             </div>
-            <h3 style={styles.bookTitle}>{livro.nome}</h3>
-            <div style={styles.infoRow}><User size={16} /><span style={styles.infoText}>{livro.autor}</span></div>
-            <div style={styles.infoRow}><Calendar size={16} /><span style={styles.infoText}>{livro.ano}</span></div>
-            <div style={styles.infoRow}><Building2 size={16} /><span style={styles.infoText}>{livro.editora}</span></div>
+            <h3 style={styles.bookTitle}>{livro.title}</h3>
+            <div style={styles.infoRow}><User size={16} /><span style={styles.infoText}>{livro.author}</span></div>
+            <div style={styles.infoRow}><Calendar size={16} /><span style={styles.infoText}>{livro.year}</span></div>
+            <div style={styles.infoRow}><Building2 size={16} /><span style={styles.infoText}>{livro.publisher}</span></div>
           </div>
         ))}
       </main>
