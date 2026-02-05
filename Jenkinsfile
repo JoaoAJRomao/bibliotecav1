@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        nodejs 'node22' // O nome que você deu na configuração
+    }
+
     environment {
         // Configurações para o Next.js e Drizzle reconhecerem o banco durante o build/test
         DATABASE_URL = "postgresql://postgres:password@db:5432/librarie"
