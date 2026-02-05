@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'node22' // O nome que você deu na configuração
+        nodejs 'NODE_LOCAL' // O nome que você deu na configuração
     }
 
     environment {
