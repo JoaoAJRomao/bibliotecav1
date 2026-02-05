@@ -34,7 +34,7 @@ bun dev
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## Versions
-Node version 22.12.0
-Postgres version 15
-Client: Docker Engine version 29.2.1
-Server: Docker Engine version 29.2.1
+- Node version 22.12.0
+- Postgres version 15
+- Client: Docker Engine version 29.2.1
+- Server: Docker Engine version 29.2.1
