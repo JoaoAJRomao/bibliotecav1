@@ -6,18 +6,13 @@ import { Mail, Lock, BookOpen } from 'lucide-react';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  // Hook de navegação do Next.js
   const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Login:', { email, password });
-    // Simulação de validação
     if (email && password) {
-      console.log('Login efetuado no Next.js');
-      
-      // router.push faz o redirecionamento para a pasta /dashboard
+      console.log('Login efetuado no Next.js');      
       router.push('/livros'); 
     } else {
       console.log('Preencha todos os campos');
@@ -73,7 +68,6 @@ const Login = () => {
   );
 };
 
-// Aqui aplicamos o Record<string, CSSProperties> para resolver o erro de tipagem
 const styles: Record<string, CSSProperties> = {
   container: {
     display: 'flex',
@@ -92,7 +86,7 @@ const styles: Record<string, CSSProperties> = {
     maxWidth: '400px'
   },
   header: {
-    textAlign: 'center', // Agora o TS aceita pois sabe que é uma CSSProperty
+    textAlign: 'center',
     marginBottom: '2rem'
   },
   title: {

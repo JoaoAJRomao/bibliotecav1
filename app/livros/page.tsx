@@ -26,7 +26,6 @@ const BookSearch = () => {
     editora: ''
   });
 
-  // Carregar livros da API ao iniciar
   useEffect(() => {
     const carregarLivros = async () => {
       try {
@@ -49,7 +48,6 @@ const BookSearch = () => {
     });
 
     if (response.ok) {
-      // Remove o livro da lista local para atualizar a tela instantaneamente
       setLivros(prev => prev.filter(livro => livro.id !== id));
       alert('Livro removido com sucesso!');
     } else {
