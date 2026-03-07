@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '../../src/index';
 import { booksTable } from '../../src/db/schema';
+import { eq } from 'drizzle-orm';
 
 export async function GET() {
     try {
@@ -26,5 +27,31 @@ export async function POST(request: Request) {
     } catch (error) {
         console.error("Erro no Banco:", error);
         return NextResponse.json({ error: "Erro ao salvar livro" }, { status: 500 });
+    }
+}
+
+export async function PUT(request: Request) {
+    try {
+        const data = await request.json();
+        const { id, title, author, year, publisher } = data;
+
+        if (!id) {
+            return NextResponse.json({ error: "ID do livro é obrigatório" }, { status: 400 });
+        }
+
+        const livroAtualizado = await db.update(booksTable)
+            .set({
+                title,
+                author,
+                year: parseInt(year),
+                publisher
+            })
+            .where(eq(booksTable.id, id))
+            .returning();
+
+        return NextResponse.json(livroAtualizado[0]);
+    } catch (error) {
+        console.error("Erro ao atualizar livro:", error);
+        return NextResponse.json({ error: "Erro ao atualizar dados" }, { status: 500 });
     }
 }

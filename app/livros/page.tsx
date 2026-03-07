@@ -1,10 +1,7 @@
 'use client';
 import React, { useState, CSSProperties, useEffect } from 'react';
-import { NextResponse } from 'next/server';
-import { db } from '../src/index';
-import { booksTable } from '../src/db/schema';
 import { useRouter } from 'next/navigation';
-import { Search, Book, User, Calendar, Building2, Plus, X, LogOut } from 'lucide-react';
+import { Search, Book, User, Calendar, Building2, Plus, X, LogOut, Pencil } from 'lucide-react';
 
 interface BookData {
   id: number;
@@ -15,14 +12,13 @@ interface BookData {
 }
 
 const BookSearch = () => {
-  // Agora a lista de livros está no estado para podermos adicionar novos
   const [livros, setLivros] = useState<BookData[]>([]);
-  const router = useRouter();
-
   const [busca, setBusca] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editandoId, setEditandoId] = useState<number | null>(null);
+  const router = useRouter();
 
-  // Estados para o formulário do novo livro
+  // Estados para o formulário
   const [novoLivro, setNovoLivro] = useState({
     nome: '',
     autor: '',
@@ -30,6 +26,7 @@ const BookSearch = () => {
     editora: ''
   });
 
+  // Carregar livros da API ao iniciar
   useEffect(() => {
     const carregarLivros = async () => {
       try {
@@ -40,7 +37,6 @@ const BookSearch = () => {
         console.error("Falha ao carregar livros:", error);
       }
     };
-
     carregarLivros();
   }, []);
 
@@ -48,14 +44,28 @@ const BookSearch = () => {
     livro.title.toLowerCase().includes(busca.toLowerCase())
   );
 
-
   const handleLogout = () => {
-    // Aqui no futuro você limparia tokens (JWT) ou cookies de sessão
-    console.log('Utilizador saiu do sistema');
-    router.push('/'); // Redireciona para a página de login (raiz)
+    router.push('/');
   };
 
-  const handleAddBook = async (e: React.FormEvent) => {
+  const fecharModal = () => {
+    setIsModalOpen(false);
+    setEditandoId(null);
+    setNovoLivro({ nome: '', autor: '', ano: '', editora: '' });
+  };
+
+  const handleOpenEdit = (livro: BookData) => {
+    setNovoLivro({
+      nome: livro.title,
+      autor: livro.author,
+      ano: livro.year.toString(),
+      editora: livro.publisher
+    });
+    setEditandoId(livro.id);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveBook = async (e: React.FormEvent) => {
     e.preventDefault();
     const anoParseado = parseInt(novoLivro.ano, 10);
 
@@ -65,6 +75,7 @@ const BookSearch = () => {
     }
 
     const item = {
+      ...(editandoId && { id: editandoId }),
       title: novoLivro.nome,
       author: novoLivro.autor,
       year: anoParseado,
@@ -72,22 +83,26 @@ const BookSearch = () => {
     };
 
     try {
+      const method = editandoId ? 'PUT' : 'POST';
       const response = await fetch('/api/livros', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(item),
       });
 
       if (response.ok) {
-        const livroCriado = await response.json();
-        setLivros((prev) => [...prev, livroCriado]);
-        setIsModalOpen(false);
-        setNovoLivro({ nome: '', autor: '', ano: '', editora: '' });
-        alert('Livro salvo com sucesso no Postgres!');
+        const livroProcessado = await response.json();
+        
+        if (editandoId) {
+          setLivros(prev => prev.map(l => l.id === editandoId ? livroProcessado : l));
+          alert('Livro atualizado com sucesso!');
+        } else {
+          setLivros(prev => [...prev, livroProcessado]);
+          alert('Livro salvo com sucesso!');
+        }
+        fecharModal();
       } else {
-        alert('Erro ao salvar no banco de dados.');
+        alert('Erro ao processar a solicitação no servidor.');
       }
     } catch (error) {
       console.error("Erro na requisição:", error);
@@ -100,11 +115,7 @@ const BookSearch = () => {
       <header style={styles.header}>
         <div style={styles.topBar}>
           <h1 style={styles.pageTitle}>Consulta de Acervo</h1>
-          <button
-            onClick={handleLogout}
-            style={styles.logoutButton}
-            title="Sair do sistema"
-          >
+          <button onClick={handleLogout} style={styles.logoutButton}>
             <LogOut size={20} />
             <span>Sair</span>
           </button>
@@ -125,8 +136,17 @@ const BookSearch = () => {
       <main style={styles.grid}>
         {livrosFiltrados.map((livro) => (
           <div key={livro.id} style={styles.card}>
-            <div style={styles.bookIconWrapper}>
-              <Book size={32} color="#2563eb" />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={styles.bookIconWrapper}>
+                <Book size={32} color="#2563eb" />
+              </div>
+              <button 
+                onClick={() => handleOpenEdit(livro)}
+                style={styles.actionButton}
+                title="Editar livro"
+              >
+                <Pencil size={18} />
+              </button>
             </div>
             <h3 style={styles.bookTitle}>{livro.title}</h3>
             <div style={styles.infoRow}><User size={16} /><span style={styles.infoText}>{livro.author}</span></div>
@@ -136,27 +156,31 @@ const BookSearch = () => {
         ))}
       </main>
 
-      {/* Botão Flutuante (FAB) */}
       <button
         style={styles.fab}
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => {
+          setEditandoId(null);
+          setNovoLivro({ nome: '', autor: '', ano: '', editora: '' });
+          setIsModalOpen(true);
+        }}
         title="Adicionar novo livro"
       >
         <Plus size={32} color="white" />
       </button>
 
-      {/* Modal / Popup */}
       {isModalOpen && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalContent}>
             <div style={styles.modalHeader}>
-              <h3 style={{ color: '#1f2937' }}>Cadastrar Novo Livro</h3>
-              <button onClick={() => setIsModalOpen(false)} style={styles.closeButton}>
+              <h3 style={{ color: '#1f2937' }}>
+                {editandoId ? 'Editar Livro' : 'Cadastrar Novo Livro'}
+              </h3>
+              <button onClick={fecharModal} style={styles.closeButton}>
                 <X size={24} />
               </button>
             </div>
 
-            <form onSubmit={handleAddBook} style={styles.modalForm}>
+            <form onSubmit={handleSaveBook} style={styles.modalForm}>
               <input
                 placeholder="Nome do Livro"
                 required
@@ -186,7 +210,9 @@ const BookSearch = () => {
                 value={novoLivro.editora}
                 onChange={e => setNovoLivro({ ...novoLivro, editora: e.target.value })}
               />
-              <button type="submit" style={styles.saveButton}>Salvar Livro</button>
+              <button type="submit" style={styles.saveButton}>
+                {editandoId ? 'Salvar Alterações' : 'Salvar Livro'}
+              </button>
             </form>
           </div>
         </div>
@@ -196,110 +222,29 @@ const BookSearch = () => {
 };
 
 const styles: Record<string, CSSProperties> = {
-  // ... (manter estilos anteriores do container, header, card, etc.)
   container: { padding: '2rem', backgroundColor: '#f3f4f6', minHeight: '100vh', fontFamily: 'sans-serif', position: 'relative' },
   header: { marginBottom: '2rem', maxWidth: '1200px', margin: '0 auto 2rem auto' },
   pageTitle: { fontSize: '1.8rem', color: '#111827', marginBottom: '1rem' },
+  topBar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' },
+  logoutButton: { display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#fee2e2', color: '#dc2626', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' },
   searchBar: { display: 'flex', alignItems: 'center', backgroundColor: '#fff', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #d1d5db' },
   searchIcon: { color: '#9ca3af', marginRight: '0.75rem' },
   searchInput: { border: 'none', outline: 'none', width: '100%', fontSize: '1rem', color: '#000' },
   grid: { display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'center', maxWidth: '1200px', margin: '0 auto' },
   card: { backgroundColor: '#fff', width: '250px', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: '0.5rem' },
   bookIconWrapper: { backgroundColor: '#eff6ff', width: 'fit-content', padding: '0.75rem', borderRadius: '50%', marginBottom: '1rem' },
+  actionButton: { border: 'none', background: 'none', cursor: 'pointer', color: '#6b7280', padding: '4px' },
   bookTitle: { fontSize: '1.1rem', fontWeight: 'bold', color: '#1f2937', minHeight: '2.5rem' },
   infoRow: { display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4b5563' },
   infoText: { fontSize: '0.9rem' },
-
-  // Estilos novos para FAB e Modal
-  fab: {
-    position: 'fixed',
-    bottom: '40px',
-    right: '40px',
-    backgroundColor: '#2563eb',
-    width: '64px',
-    height: '64px',
-    borderRadius: '50%',
-    border: 'none',
-    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)',
-    cursor: 'pointer',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 100
-  },
-  modalOverlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 200
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    padding: '2rem',
-    borderRadius: '12px',
-    width: '100%',
-    maxWidth: '400px',
-    boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
-  },
-  modalHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1.5rem'
-  },
-  closeButton: {
-    border: 'none',
-    background: 'none',
-    cursor: 'pointer',
-    color: '#6b7280'
-  },
-  modalForm: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem'
-  },
-  modalInput: {
-    padding: '0.75rem',
-    borderRadius: '6px',
-    border: '1px solid #d1d5db',
-    fontSize: '1rem',
-    color: '#000'
-  },
-  saveButton: {
-    backgroundColor: '#2563eb',
-    color: 'white',
-    padding: '0.75rem',
-    borderRadius: '6px',
-    border: 'none',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    marginTop: '1rem'
-  },
-  topBar: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1rem'
-  },
-  logoutButton: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    backgroundColor: '#fee2e2', // Vermelho muito claro
-    color: '#dc2626', // Vermelho
-    border: 'none',
-    padding: '0.5rem 1rem',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontWeight: 'bold',
-    transition: 'background 0.2s'
-  },
+  fab: { position: 'fixed', bottom: '40px', right: '40px', backgroundColor: '#2563eb', width: '64px', height: '64px', borderRadius: '50%', border: 'none', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100 },
+  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 200 },
+  modalContent: { backgroundColor: 'white', padding: '2rem', borderRadius: '12px', width: '100%', maxWidth: '400px' },
+  modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' },
+  closeButton: { border: 'none', background: 'none', cursor: 'pointer', color: '#6b7280' },
+  modalForm: { display: 'flex', flexDirection: 'column', gap: '1rem' },
+  modalInput: { padding: '0.75rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '1rem', color: '#000' },
+  saveButton: { backgroundColor: '#2563eb', color: 'white', padding: '0.75rem', borderRadius: '6px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '1rem' },
 };
 
 export default BookSearch;
