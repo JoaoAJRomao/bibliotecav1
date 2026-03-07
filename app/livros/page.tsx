@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, CSSProperties, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { BookData } from '../src/interfaces';
 import {
   Search,
   Book,
@@ -14,14 +15,6 @@ import {
   Trash2,
   Loader2,
 } from "lucide-react";
-
-interface BookData {
-  id: number;
-  title: string;
-  author: string;
-  year: number;
-  publisher: string;
-}
 
 const BookSearch = () => {
   const [livros, setLivros] = useState<BookData[]>([]);
@@ -54,50 +47,6 @@ const BookSearch = () => {
 
     carregarLivros();
   }, []);
-
-  const handleDeleteBook = async (id: number) => {
-    if (!confirm("Tem certeza que deseja remover este livro?")) return;
-
-    try {
-      const response = await fetch(`/api/livros?id=${id}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        setLivros((prev) => prev.filter((livro) => livro.id !== id));
-        alert("Livro removido com sucesso!");
-      } else {
-        alert("Erro ao remover o livro.");
-      }
-    } catch (error) {
-      console.error("Erro na requisição:", error);
-    }
-  };
-
-  const livrosFiltrados = livros.filter((livro) =>
-    livro.title.toLowerCase().includes(busca.toLowerCase()),
-  );
-
-  const handleLogout = () => {
-    router.push("/");
-  };
-
-  const fecharModal = () => {
-    setIsModalOpen(false);
-    setEditandoId(null);
-    setNovoLivro({ nome: "", autor: "", ano: "", editora: "" });
-  };
-
-  const handleOpenEdit = (livro: BookData) => {
-    setNovoLivro({
-      nome: livro.title,
-      autor: livro.author,
-      ano: livro.year.toString(),
-      editora: livro.publisher,
-    });
-    setEditandoId(livro.id);
-    setIsModalOpen(true);
-  };
 
   const handleSaveBook = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,6 +94,51 @@ const BookSearch = () => {
       alert("Erro de conexão com o servidor.");
     }
   };
+  
+  const handleDeleteBook = async (id: number) => {
+    if (!confirm("Tem certeza que deseja remover este livro?")) return;
+
+    try {
+      const response = await fetch(`/api/livros?id=${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setLivros((prev) => prev.filter((livro) => livro.id !== id));
+        alert("Livro removido com sucesso!");
+      } else {
+        alert("Erro ao remover o livro.");
+      }
+    } catch (error) {
+      console.error("Erro na requisição:", error);
+    }
+  };
+
+  const livrosFiltrados = livros.filter((livro) =>
+    livro.title.toLowerCase().includes(busca.toLowerCase()),
+  );
+
+  const handleLogout = () => {
+    router.push("/");
+  };
+
+  const fecharModal = () => {
+    setIsModalOpen(false);
+    setEditandoId(null);
+    setNovoLivro({ nome: "", autor: "", ano: "", editora: "" });
+  };
+
+  const handleOpenEdit = (livro: BookData) => {
+    setNovoLivro({
+      nome: livro.title,
+      autor: livro.author,
+      ano: livro.year.toString(),
+      editora: livro.publisher,
+    });
+    setEditandoId(livro.id);
+    setIsModalOpen(true);
+  };
+
 
   return (
     <div style={styles.container}>
