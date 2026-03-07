@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, CSSProperties, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Book, User, Calendar, Building2, Plus, X, LogOut, Pencil } from 'lucide-react';
+import { Search, Book, User, Calendar, Building2, Plus, X, LogOut, Pencil, Trash2 } from 'lucide-react';
 
 interface BookData {
   id: number;
@@ -39,6 +39,26 @@ const BookSearch = () => {
     };
     carregarLivros();
   }, []);
+
+  const handleDeleteBook = async (id: number) => {
+  if (!confirm('Tem certeza que deseja remover este livro?')) return;
+
+  try {
+    const response = await fetch(`/api/livros?id=${id}`, {
+      method: 'DELETE',
+    });
+
+    if (response.ok) {
+      // Remove o livro da lista local para atualizar a tela instantaneamente
+      setLivros(prev => prev.filter(livro => livro.id !== id));
+      alert('Livro removido com sucesso!');
+    } else {
+      alert('Erro ao remover o livro.');
+    }
+  } catch (error) {
+    console.error("Erro na requisição:", error);
+  }
+};
 
   const livrosFiltrados = livros.filter(livro =>
     livro.title.toLowerCase().includes(busca.toLowerCase())
@@ -140,13 +160,25 @@ const BookSearch = () => {
               <div style={styles.bookIconWrapper}>
                 <Book size={32} color="#2563eb" />
               </div>
-              <button 
-                onClick={() => handleOpenEdit(livro)}
-                style={styles.actionButton}
-                title="Editar livro"
-              >
-                <Pencil size={18} />
-              </button>
+
+              {/* Container para os botões de ação */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button 
+                  onClick={() => handleOpenEdit(livro)}
+                  style={styles.actionButton}
+                  title="Editar livro"
+                >
+                  <Pencil size={18} />
+                </button>
+                
+                <button 
+                  onClick={() => handleDeleteBook(livro.id)}
+                  style={{ ...styles.actionButton, color: '#ef4444' }} // Cor vermelha para excluir
+                  title="Remover livro"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
             </div>
             <h3 style={styles.bookTitle}>{livro.title}</h3>
             <div style={styles.infoRow}><User size={16} /><span style={styles.infoText}>{livro.author}</span></div>

@@ -55,3 +55,22 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: "Erro ao atualizar dados" }, { status: 500 });
     }
 }
+
+export async function DELETE(request: Request) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json({ error: "ID não fornecido" }, { status: 400 });
+        }
+
+        await db.delete(booksTable)
+            .where(eq(booksTable.id, parseInt(id)));
+
+        return NextResponse.json({ message: "Livro removido com sucesso" });
+    } catch (error) {
+        console.error("Erro ao deletar livro:", error);
+        return NextResponse.json({ error: "Erro interno ao deletar" }, { status: 500 });
+    }
+}
