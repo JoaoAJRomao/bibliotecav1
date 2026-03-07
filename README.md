@@ -19,6 +19,11 @@ Set the environment variables to connect with the database in the .env file.
 DATABASE_URL=postgres://YOUR-NAME:YOUR-PASSWORD@localhost:5435/librarie_db
 ```
 
+On the first local deploy, you should inicialite the database by command
+```bash
+npx drizzle-kit push
+```
+
 Run the development server:
 
 ```bash
