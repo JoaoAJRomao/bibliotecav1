@@ -2,20 +2,33 @@
 import React, { useState, CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, BookOpen } from "lucide-react";
+import Swal from "sweetalert2";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login:", { email, password });
-    if (email && password) {
-      console.log("Login efetuado no Next.js");
-      router.push("/livros");
-    } else {
-      console.log("Preencha todos os campos");
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Login efetuado:", data.name);
+        router.push("/livros");
+      } else {
+        const errorData = await response.json();
+        Swal.fire("Erro", `Erro ao realizar login: ${errorData.error}`, "error");
+      }
+    } catch (error) {
+      console.error("Erro na requisição:", error);
     }
   };
 
