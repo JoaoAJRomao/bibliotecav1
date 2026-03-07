@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, CSSProperties, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { BookData } from '../src/interfaces';
+import { BookData } from "../src/interfaces";
+import Swal from "sweetalert2";
 import {
   Search,
   Book,
@@ -53,7 +54,12 @@ const BookSearch = () => {
     const anoParseado = parseInt(novoLivro.ano, 10);
 
     if (isNaN(anoParseado)) {
-      alert("Por favor, insira um ano válido");
+      Swal.fire({
+        icon: "error",
+        title: "Ano Inválido",
+        text: "Por favor, insira um número válido para o ano.",
+        confirmButtonColor: "#2563eb",
+      });
       return;
     }
 
@@ -80,37 +86,61 @@ const BookSearch = () => {
           setLivros((prev) =>
             prev.map((l) => (l.id === editandoId ? livroProcessado : l)),
           );
-          alert("Livro atualizado com sucesso!");
         } else {
           setLivros((prev) => [...prev, livroProcessado]);
-          alert("Livro salvo com sucesso!");
         }
         fecharModal();
+        Swal.fire({
+          icon: "success",
+          title: editandoId ? "Atualizado!" : "Salvo!",
+          text: editandoId
+            ? "As alterações foram gravadas."
+            : "O livro foi adicionado ao acervo.",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
       } else {
-        alert("Erro ao processar a solicitação no servidor.");
+        throw new Error("Erro no servidor");
       }
     } catch (error) {
       console.error("Erro na requisição:", error);
-      alert("Erro de conexão com o servidor.");
+      Swal.fire({
+        icon: "error",
+        title: "Erro de conexão",
+        text: "Não foi possível conectar ao servidor.",
+        confirmButtonColor: "#2563eb",
+      });
     }
   };
-  
+
   const handleDeleteBook = async (id: number) => {
-    if (!confirm("Tem certeza que deseja remover este livro?")) return;
+    const result = await Swal.fire({
+      title: "Tem certeza?",
+      text: "Você não poderá reverter isso!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#2563eb",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sim, excluir!",
+      cancelButtonText: "Cancelar",
+    });
 
-    try {
-      const response = await fetch(`/api/livros?id=${id}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        setLivros((prev) => prev.filter((livro) => livro.id !== id));
-        alert("Livro removido com sucesso!");
-      } else {
-        alert("Erro ao remover o livro.");
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`/api/livros?id=${id}`, {
+          method: "DELETE",
+        });
+        if (response.ok) {
+          setLivros((prev) => prev.filter((l) => l.id !== id));
+          Swal.fire("Excluído!", "O livro foi removido.", "success");
+        } else {
+          Swal.fire("Erro", "Não foi possível excluir o livro.", "error");
+        }
+      } catch (error) {
+        console.error("Erro ao deletar:", error);
+        Swal.fire("Erro", "Erro ao processar a exclusão.", "error");
       }
-    } catch (error) {
-      console.error("Erro na requisição:", error);
     }
   };
 
@@ -138,7 +168,6 @@ const BookSearch = () => {
     setEditandoId(livro.id);
     setIsModalOpen(true);
   };
-
 
   return (
     <div style={styles.container}>
