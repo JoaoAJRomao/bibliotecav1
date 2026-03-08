@@ -3,6 +3,7 @@ import React, { useState, CSSProperties, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { BookData } from "../src/interfaces";
 import Swal from "sweetalert2";
+import Cookies from 'js-cookie';
 import {
   Search,
   Book,
@@ -149,6 +150,7 @@ const BookSearch = () => {
   );
 
   const handleLogout = () => {
+    Cookies.remove('user_session');
     router.push("/");
   };
 

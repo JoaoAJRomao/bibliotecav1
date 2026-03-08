@@ -3,6 +3,7 @@ import React, { useState, CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, BookOpen } from "lucide-react";
 import Swal from "sweetalert2";
+import Cookies from "js-cookie";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -21,11 +22,21 @@ const Login = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Login efetuado:", data.name);
+        console.log("Login efetuado:", data.user.name);
+        const trintaMinutos = 1 / 48; //30min é igual 1/48 de um dia
+        Cookies.set("user_session", data.token, {
+          expires: trintaMinutos,
+          sameSite: "strict", // Recomendado para segurança
+          secure: process.env.NODE_ENV === "production", // Apenas via HTTPS em produção
+        });
         router.push("/livros");
       } else {
         const errorData = await response.json();
-        Swal.fire("Erro", `Erro ao realizar login: ${errorData.error}`, "error");
+        Swal.fire(
+          "Erro",
+          `Erro ao realizar login: ${errorData.error}`,
+          "error",
+        );
       }
     } catch (error) {
       console.error("Erro na requisição:", error);

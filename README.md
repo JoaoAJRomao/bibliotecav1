@@ -17,6 +17,7 @@ docker run -d --name NAME-OF-CONTAINER -e POSTGRES_DB=librarie_db -e POSTGRES_US
 Set the environment variables to connect with the database in the .env file.
 ```basg
 DATABASE_URL=postgres://YOUR-NAME:YOUR-PASSWORD@localhost:5435/librarie_db
+JWT_SECRETE=YOUR-JWT-SECRETE-SHOULD-BE-BIG
 ```
 
 On the first local deploy, you should inicialite the database by command

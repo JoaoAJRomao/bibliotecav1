@@ -3,6 +3,10 @@ import { db } from "../../../src/index";
 import { usersTable } from "../../../src/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { SignJWT } from "jose";
+
+const secret = process.env.JWT_SECRET || "chave_padrao_segura";
+const SECRET_KEY = new TextEncoder().encode(secret);
 
 export async function POST(request: Request) {
   try {
@@ -21,17 +25,25 @@ export async function POST(request: Request) {
     }
 
     const user = users[0];
-    // O compare valida se a senha digitada corresponde ao hash do banco
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       return NextResponse.json({ error: "Senha incorreta." }, { status: 401 });
     }
 
-    return NextResponse.json({
+    const token = await new SignJWT({
       id: user.id,
-      name: user.name,
       email: user.email,
+      name: user.name,
+    })
+      .setProtectedHeader({ alg: "HS256" })
+      .setIssuedAt()
+      .setExpirationTime("30min") // Expira em 30 minutos.
+      .sign(SECRET_KEY);
+
+    return NextResponse.json({
+      token,
+      user: { name: user.name, email: user.email },
     });
   } catch (error) {
     return NextResponse.json(
