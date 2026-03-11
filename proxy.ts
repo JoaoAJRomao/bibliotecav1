@@ -5,7 +5,7 @@ import { jwtVerify } from 'jose';
 const secret = process.env.JWT_SECRET || "chave_padrao_segura";
 const SECRET_KEY = new TextEncoder().encode(secret);
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const token = request.cookies.get('user_session')?.value;
 
   // Se tentar acessar /livros
