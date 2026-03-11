@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const secret = process.env.JWT_SECRET || "chave_padrao_segura";
+const secret = process.env.JWT_SECRET || "esta_e_uma_chave_reserva_muito_longa_para_testes_123";
 const SECRET_KEY = new TextEncoder().encode(secret);
 
 export async function proxy(request: NextRequest) {
