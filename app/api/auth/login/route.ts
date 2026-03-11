@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { SignJWT } from "jose";
 
-const secret = process.env.JWT_SECRET || "chave_padrao_segura";
+const secret = process.env.JWT_SECRET || "esta_e_uma_chave_reserva_muito_longa_para_testes_123";
 const SECRET_KEY = new TextEncoder().encode(secret);
 
 export async function POST(request: Request) {
