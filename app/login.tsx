@@ -54,11 +54,12 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.inputGroup}>
-            <label style={styles.label}>E-mail</label>
+            <label htmlFor="email-input" style={styles.label}>E-mail</label>
             <div style={styles.inputWrapper}>
               <Mail size={20} style={styles.icon} />
               <input
                 type="email"
+                id="email-input"
                 placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -69,11 +70,12 @@ const Login = () => {
           </div>
 
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Senha</label>
+            <label htmlFor="password-input" style={styles.label}>Senha</label>
             <div style={styles.inputWrapper}>
               <Lock size={20} style={styles.icon} />
               <input
                 type="password"
+                id="password-input"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
