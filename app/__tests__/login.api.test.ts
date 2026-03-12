@@ -1,4 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+/**
+ * @vitest-environment node
+ */
+import { describe, it, expect } from 'vitest';
 import { POST } from '../../app/api/auth/login/route';
 
 describe('API de Login', () => {
