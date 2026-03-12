@@ -85,7 +85,7 @@ const BookSearch = () => {
 
         if (editandoId) {
           setLivros((prev) =>
-            prev.map((l) => (l.id === editandoId ? livroProcessado : l)),
+            prev.map((l) => (l.id === editandoId ? { ...l, ...livroProcessado } : l)),
           );
         } else {
           setLivros((prev) => [...prev, livroProcessado]);
@@ -146,7 +146,7 @@ const BookSearch = () => {
   };
 
   const livrosFiltrados = livros.filter((livro) =>
-    livro.title.toLowerCase().includes(busca.toLowerCase()),
+    livro?.title?.toLowerCase().includes(busca.toLowerCase()),
   );
 
   const handleLogout = () => {

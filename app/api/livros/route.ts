@@ -39,11 +39,15 @@ export async function PUT(request: Request) {
             return NextResponse.json({ error: "ID do livro é obrigatório" }, { status: 400 });
         }
 
-        await db.update(booksTable)
+        const [updateBook] = await db.update(booksTable)
             .set({ title, author, year, publisher })
-            .where(eq(booksTable.id, id));
+            .where(eq(booksTable.id, id))
+            .returning();
 
-        return NextResponse.json({ message: "Livro atualizado com sucesso!" }, { status: 200 });
+        if (!updateBook) {
+            return NextResponse.json({ error: "Livro não encontrado" }, { status: 404 });
+        }   
+        return NextResponse.json(updateBook, { status: 200 });
     } catch (error) {
         console.error("Erro ao atualizar livro:", error);
         return NextResponse.json({ error: "Erro ao atualizar dados" }, { status: 500 });
