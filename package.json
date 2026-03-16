@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "dev:bridge":"npx next dev -H 0.0.0.0 --port 3000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "drizzle": "drizzle-kit studio",
     "test": "vitest run",
-    "e2e": "playwright test"
+    "e2e": "playwright test --project=chromium",
+    "e2e:headed": "playwright test --project=chromium --headed"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
