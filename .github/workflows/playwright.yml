@@ -48,6 +48,11 @@ jobs:
       env:
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
+    - name: Seed Database
+      run: npx tsx app/src/db/seed.ts
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
     - name: Run Playwright tests
       run: npx playwright test
       env:
@@ -57,7 +62,7 @@ jobs:
 
     - name: Upload Test Results (Traces/Screenshots)
       uses: actions/upload-artifact@v4
-      if: failure() # Executa apenas se os testes falharem
+      if: failure()
       with:
         name: playwright-test-results
         path: test-results/
