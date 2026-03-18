@@ -35,7 +35,7 @@ jobs:
       run: npm ci
 
     - name: Build application
-      run: npm run build # Adicione esta linha
+      run: npm run build
       env:
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
