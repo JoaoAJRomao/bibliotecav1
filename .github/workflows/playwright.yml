@@ -55,6 +55,14 @@ jobs:
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
         BASE_URL: http://localhost:3000 
 
+    - name: Upload Test Results (Traces/Screenshots)
+      uses: actions/upload-artifact@v4
+      if: failure() # Executa apenas se os testes falharem
+      with:
+        name: playwright-test-results
+        path: test-results/
+        retention-days: 7
+
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
