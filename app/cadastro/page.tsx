@@ -13,7 +13,7 @@ const Cadastro = () => {
     confirmPassword: "",
   });
 
-  const handleCadastro = async (e: React.FormEvent) => {
+  const handleCadastro = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {

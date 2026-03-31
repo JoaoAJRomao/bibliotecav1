@@ -50,7 +50,7 @@ const BookSearch = () => {
     carregarLivros();
   }, []);
 
-  const handleSaveBook = async (e: React.FormEvent) => {
+  const handleSaveBook = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const anoParseado = parseInt(novoLivro.ano, 10);
 
