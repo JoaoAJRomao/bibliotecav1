@@ -145,6 +145,20 @@ const BookSearch = () => {
     }
   };
 
+  const handleAlugar = async (id: number) => {
+    const response = await fetch('/api/livros/alugar', {
+      method: 'POST',
+      body: JSON.stringify({ bookId: id })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      Swal.fire('Ops!', errorData.error, 'error');
+      return;
+    }
+    setLivros(prev => prev.map(l => l.id === id ? { ...l, availableQuantity: l.availableQuantity - 1 } : l));
+  };
+
   const livrosFiltrados = livros.filter((livro) =>
     livro?.title?.toLowerCase().includes(busca.toLowerCase()),
   );
@@ -248,6 +262,20 @@ const BookSearch = () => {
                 <Building2 size={16} />
                 <span style={styles.infoText}>{livro.publisher}</span>
               </div>
+              <div className="flex justify-between items-center text-sm mb-4">
+                <span className={livro.availableQuantity > 0 ? "text-green-600" : "text-red-600 font-bold"}>
+                  {livro.availableQuantity > 0
+                    ? `${livro.availableQuantity} de ${livro.totalQuantity} disponíveis`
+                    : "Esgotado"}
+                </span>
+              </div>
+              <button
+                onClick={() => handleAlugar(livro.id)}
+                disabled={livro.availableQuantity <= 0}
+                className="bg-blue-600 disabled:bg-gray-400 text-white p-2 rounded"
+              >
+                Alugar
+              </button>
             </div>
           ))
         ) : (

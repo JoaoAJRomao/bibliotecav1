@@ -12,4 +12,6 @@ export const booksTable = pgTable("books", {
     author: varchar({ length: 255 }).notNull(),
     year: integer().notNull(),
     publisher: varchar({ length: 255 }).notNull(),
+    totalQuantity: integer("total_quantity").notNull().default(1),
+    availableQuantity: integer("available_quantity").notNull().default(1),
 });

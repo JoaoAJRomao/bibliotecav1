@@ -4,6 +4,8 @@ export interface BookData {
   author: string;
   year: number;
   publisher: string;
+  totalQuantity: number;
+  availableQuantity: number;
 }
 
 export type NewBook = Omit<BookData, 'id'>;
