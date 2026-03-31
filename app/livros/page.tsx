@@ -273,6 +273,7 @@ const BookSearch = () => {
                 onClick={() => handleAlugar(livro.id)}
                 disabled={livro.availableQuantity <= 0}
                 className="bg-blue-600 disabled:bg-gray-400 text-white p-2 rounded"
+                id={`alugar-button-${livro.id}`}
               >
                 Alugar
               </button>
@@ -292,6 +293,7 @@ const BookSearch = () => {
           setNovoLivro({ nome: "", autor: "", ano: "", editora: "" });
           setIsModalOpen(true);
         }}
+        id="btn-add-book"
         title="Adicionar novo livro"
       >
         <Plus size={32} color="white" />
