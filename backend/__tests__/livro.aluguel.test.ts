@@ -2,12 +2,18 @@
  * @vitest-environment node
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { db } from '../src/index';
+import request from 'supertest';
+import express from 'express';
+import { db } from '../src/db';
 import { booksTable } from '../src/db/schema';
 import { eq } from 'drizzle-orm';
-import { POST } from '../api/livros/alugar/route';
+import livrosRoutes from '../src/routes/livros';
 
-describe('Integração: Regras de Aluguer de Livros', () => {
+const app = express();
+app.use(express.json());
+app.use('/api/livros', livrosRoutes);
+
+describe('Integração: Regras de Aluguer de Livros (Express API)', () => {
   let livroDisponivelId: number;
   let livroEsgotadoId: number;
 
@@ -39,32 +45,24 @@ describe('Integração: Regras de Aluguer de Livros', () => {
   });
 
   it('deve permitir alugar um livro quando houver estoque e decrementar a quantidade', async () => {
-    const request = new Request('http://localhost/api/livros/alugar', {
-      method: 'POST',
-      body: JSON.stringify({ bookId: livroDisponivelId }),
-    });
-
-    const response = await POST(request);
-    const data = await response.json();
+    const response = await request(app)
+      .post('/api/livros/alugar')
+      .send({ bookId: livroDisponivelId });
 
     expect(response.status).toBe(200);
-    expect(data.message).toBe("Livro alugado com sucesso!");
+    expect(response.body.message).toBe("Livro alugado com sucesso!");
 
     const [livro] = await db.select().from(booksTable).where(eq(booksTable.id, livroDisponivelId));
     expect(livro.availableQuantity).toBe(0);
   });
 
   it('deve retornar erro 400 ao tentar alugar um livro sem exemplares disponíveis', async () => {
-    const request = new Request('http://localhost/api/livros/alugar', {
-      method: 'POST',
-      body: JSON.stringify({ bookId: livroEsgotadoId }),
-    });
-
-    const response = await POST(request);
-    const data = await response.json();
+    const response = await request(app)
+      .post('/api/livros/alugar')
+      .send({ bookId: livroEsgotadoId });
 
     expect(response.status).toBe(400);
-    expect(data.error).toContain("não possui exemplares disponíveis");
+    expect(response.body.error).toContain("não possui exemplares disponíveis");
 
     const [livro] = await db.select().from(booksTable).where(eq(booksTable.id, livroEsgotadoId));
     expect(livro.availableQuantity).toBe(0);

@@ -2,12 +2,18 @@
  * @vitest-environment node
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { db } from '../src/index';
+import request from 'supertest';
+import express from 'express';
+import { db } from '../src/db';
 import { booksTable } from '../src/db/schema';
 import { eq } from 'drizzle-orm';
-import { PUT } from '../api/livros/route';
+import livrosRoutes from '../src/routes/livros';
 
-describe('Integração: Edição de Livros', () => {
+const app = express();
+app.use(express.json());
+app.use('/api/livros', livrosRoutes);
+
+describe('Integração: Edição de Livros (Express API)', () => {
   let livroId: number;
 
   // Cria um livro antes de iniciar o teste
@@ -29,21 +35,17 @@ describe('Integração: Edição de Livros', () => {
     }
   });
 
-  it('deve atualizar o título e o autor de um livro existente via API', async () => {
+  it('deve atualizar o título e o autor de um livro existente via API Express', async () => {
     const novosDados = {
       id: livroId,
-      title: "Título Atualizado",
-      author: "Autor Novo"
+      title: "Título Atualizado Express",
+      author: "Autor Novo Express"
     };
 
-    // Simula a requisição PUT para a rota de livros
-    const request = new Request(`http://localhost/api/livros`, {
-      method: 'PUT',
-      body: JSON.stringify(novosDados),
-    });
-
-    const response = await PUT(request);
-    const data = await response.json();
+    // Usando Supertest para testar o router Express como se fosse uma requisição real HTTP PUT
+    const response = await request(app)
+      .put('/api/livros')
+      .send(novosDados);
 
     expect(response.status).toBe(200);
 
@@ -54,7 +56,7 @@ describe('Integração: Edição de Livros', () => {
       .where(eq(booksTable.id, livroId))
       .limit(1);
 
-    expect(livroNoBanco.title).toBe("Título Atualizado");
-    expect(livroNoBanco.author).toBe("Autor Novo");
+    expect(livroNoBanco.title).toBe("Título Atualizado Express");
+    expect(livroNoBanco.author).toBe("Autor Novo Express");
   });
 });
