@@ -1,6 +1,32 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Login", () => {
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  let userId: number;
+
+  test.beforeAll(async () => {
+    const res = await fetch(`${API_URL}/api/users`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "e2e@email.com",
+        password: "123",
+        name: "e2e",
+      }),
+    });
+    const data = await res.json();
+    userId = data.id;
+  })
+
+  test.afterAll(async () => {
+    if (userId) {
+      await fetch(`${API_URL}/api/users?id=${userId}`, {
+        method: "DELETE",
+      });
+    }
+  });
+
   test.beforeEach(async ({ page }) => {
     await page.goto("localhost:3000");
   });

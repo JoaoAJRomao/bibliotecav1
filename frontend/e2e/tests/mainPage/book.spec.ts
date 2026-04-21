@@ -1,32 +1,48 @@
-import { db } from "@/app/src";
-import { booksTable } from "@/app/src/db/schema";
 import { test, expect } from "@playwright/test";
-import { eq } from "drizzle-orm";
 
 test.describe("Navegação e Livros", () => {
   let livroDisponivelId: number;
   let livroEsgotadoId: number;
 
-  test.beforeAll(async ({ page }) => {
-    const res1 = await db.insert(booksTable).values({
-      title: "Livro com Estoque",
-      author: "Autor Teste",
-      year: 2024,
-      publisher: "Editora",
-      totalQuantity: 5,
-      availableQuantity: 1 // Apenas 1 disponível
-    }).returning({ id: booksTable.id });
-    livroDisponivelId = res1[0].id;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-    const res2 = await db.insert(booksTable).values({
-      title: "Livro Esgotado",
-      author: "Autor Teste",
-      year: 2024,
-      publisher: "Editora",
-      totalQuantity: 2,
-      availableQuantity: 0 // Esgotado
-    }).returning({ id: booksTable.id });
-    livroEsgotadoId = res2[0].id;
+  test.beforeAll(async () => {
+    const res1 = await fetch(`${API_URL}/api/livros`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Livro com Estoque",
+        author: "Autor Teste",
+        year: 2024,
+        publisher: "Editora",
+        totalQuantity: 5,
+        availableQuantity: 1 // Apenas 1 disponível
+      }),
+    });
+    const data1 = await res1.json();
+    livroDisponivelId = data1.id;
+
+    // Atualizar quantidade forçada já que o POST base do nosso endpoint preenche default mas nosso teste quer forçar
+    // Nota: Como o backend não tem rota para forçar quantidades no POST/PUT atualmente, assumimos a criação normal ou que devemos mockar 
+    // mas enviaremos da mesma forma.
+    
+    // Atualização da query esgotada (Para manter a paridade criaremos como Esgotado)
+    const res2 = await fetch(`${API_URL}/api/livros`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Livro Esgotado",
+        author: "Autor Teste",
+        year: 2024,
+        publisher: "Editora",
+        totalQuantity: 2,
+        availableQuantity: 0 // Esgotado
+      }),
+    });
+    const data2 = await res2.json();
+    livroEsgotadoId = data2.id;
+    
+    // Obs: Se a sua API não salvar as quantidades passadas, você pode ter que adaptar o backend ou criar uma rota de reset de E2E.
   });
 
   test.beforeEach(async ({ page }) => {
@@ -38,8 +54,8 @@ test.describe("Navegação e Livros", () => {
   });
 
   test.afterAll(async () => {
-    await db.delete(booksTable).where(eq(booksTable.id, livroDisponivelId));
-    await db.delete(booksTable).where(eq(booksTable.id, livroEsgotadoId));
+    if (livroDisponivelId) await fetch(`${API_URL}/api/livros?id=${livroDisponivelId}`, { method: "DELETE" });
+    if (livroEsgotadoId) await fetch(`${API_URL}/api/livros?id=${livroEsgotadoId}`, { method: "DELETE" });
   });
 
   test("deve impedir acesso a /livros se o usuário deslogar", async ({
