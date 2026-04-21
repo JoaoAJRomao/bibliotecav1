@@ -1,4 +1,4 @@
-import { db } from "../index";
+import { db } from "../db";
 import { usersTable } from "./schema";
 import bcrypt from "bcryptjs";
 
