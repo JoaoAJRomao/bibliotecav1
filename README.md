@@ -1,62 +1,129 @@
-## Getting Started
-Install the packages:
+# Desafio Final - Orquestração de Clusters (bibliotecav1)
+
+Este projeto consiste em um sistema de biblioteca containerizado e orquestrado via Kubernetes (Kind), atendendo aos requisitos da pós-graduação em Engenharia de Software - DevOps (UNIFOR).
+
+## 🚀 Estrutura do Projeto
+
+- **Frontend**: Next.js (Porta 3000)
+- **Backend**: Node.js/TypeScript (Porta 3001)
+- **Banco de Dados**: PostgreSQL 15 (Porta 5432)
+
+## 🛠️ Pré-requisitos (Ambiente Linux Mint)
+
+1. Docker instalado.
+2. Kind instalado.
+3. kubectl instalado.
+
+## 📦 Como Rodar o Projeto
+
+### 1. Preparar o Cluster
 ```bash
-npm install
+kind create cluster --name desafio-unifor --config k8s/kind-config.yaml
 ```
 
-Install Docker and an image of Postgres. Current using Postgres version 15.
+### 2. Configurar Segredos
+Crie o arquivo k8s/secret.yaml baseado no k8s/secret-example.yaml.
+Para gerar os valores em base64 no terminal:
 ```bash
-docker pull postgres:15
+echo -n 'sua_senha' | base64
 ```
 
-Set the container
+### 3. Aplicar Manifestos
 ```bash
-docker run -d --name NAME-OF-CONTAINER -e POSTGRES_DB=librarie_db -e POSTGRES_USER=YOUR-USER -e POSTGRES_PASSWORD=YOUR-PASSWORD -p 5435:5432 postgres:15
+kubectl apply -f k8s/
 ```
 
-Set the environment variables to connect with the database in the .env file.
-```basg
-DATABASE_URL=postgres://YOUR-NAME:YOUR-PASSWORD@localhost:5435/librarie_db
-JWT_SECRETE=YOUR-JWT-SECRETE-SHOULD-BE-BIG
-```
-
-On the first local deploy, you should inicialite the database by command
+### 4. Verificar Status
 ```bash
-npx drizzle-kit push
+kubectl get pods -o wide
 ```
 
-Run the development server:
+### 5. Acessar Aplicação
+Abra o navegador em: http://localhost:8080
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Frontend
+kubectl port-forward svc/frontend-service 3000:80
+
+# Backend
+kubectl port-forward svc/backend-service 3001:80
 ```
 
-If you want to test in yout mobile, run:
+### 6. Acessar Banco de Dados
 ```bash
-npx next dev -H 0.0.0.0 
+kubectl port-forward svc/postgres-service 5432:5432
 ```
-Need to check the ip of your device running the app to access by the mobile. Both mobile and service need to be in the same network (wifi).
 
-At Linux service, run the command: `ifconfig` and search for word *inet*
-
-Result example : 
+### 7. Acessar Aplicação Mobile
 ```bash
-wlp6s0: flags=0000<UP,BROADCAST,RUNNING,MULTICAST>  mtu 0000
-        inet 192.199.1.176  netmask 255.255.255.0  broadcast 192.199.1.255
-
+# Substitua <IP_ADDRESS> pelo IP do seu host Linux
+http://<IP_ADDRESS>:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your destop browser to see the result.
-Open [192.199.1.176:3000](192.199.1.176:3000) with your mobile browser to see the result. (_Following example for mobile_)
+## 🛠️ Comandos Úteis
 
-## Versions
-- Node version 22.12.0
-- Postgres version 15
-- Client: Docker Engine version 29.2.1
-- Server: Docker Engine version 29.2.1
+### Limpar Cluster
+```bash
+kind delete cluster --name desafio-unifor
+```
+
+### Verificar Logs
+```bash
+kubectl logs -f deployment/frontend
+kubectl logs -f deployment/backend
+```
+
+### Remover Aplicação
+```bash
+kubectl delete -f k8s/
+```
+
+### Validação de Persistência (Critério Obrigatório)
+
+Para comprovar que o **StatefulSet** e o **PVC** estão funcionando:
+
+1. Acesse o sistema e cadastre um novo livro.
+
+2. No terminal, identifique o pod do banco e delete-o:
+
+```bash
+kubectl delete pod <nome-do-pod-do-banco>
+```
+
+3. Aguarde o pod ser recriado (o StatefulSet fará isso automaticamente - ```kubectl get pods -w```).
+
+4. Atualize a página do navegador. O livro cadastrado deve continuar visível, provando que os dados não foram perdidos com o reinício do container.
+
+### Recursos Kubernetes Utilizados
+
+- StatefulSet: Garantia de identidade e persistência do banco de dados.
+
+- Probes: Liveness e Readiness configurados nos Deployments.
+
+- ConfigMap/Secret: Separação de configurações e dados sensíveis.
+
+- NodePort: Mapeamento para acesso via host (Linux Mint).
+
+## 📝 Observações
+
+- O Kind cria um cluster Kubernetes localmente.
+- Os segredos são injetados via Secret.
+- As variáveis de ambiente são injetadas via ConfigMap.
+- Os serviços são expostos via Service.
+- Os deployments são gerenciados via Deployment.
+
+## 📚 Referências
+
+- [Kind](https://kind.sigs.k8s.io/)
+- [Kubernetes](https://kubernetes.io/)
+- [Next.js](https://nextjs.org/)
+- [Node.js](https://nodejs.org/)
+- [PostgreSQL](https://www.postgresql.org/)
+
+## 👥 Autores
+
+- [Seu Nome] - [Seu Email]
+
+## 📄 Licença
+
+Este projeto é de uso exclusivo para fins acadêmicos no âmbito da disciplina de Engenharia de Software - DevOps (UNIFOR).
