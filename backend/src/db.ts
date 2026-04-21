@@ -1,10 +1,13 @@
-import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+import * as schema from './db/schema';
 
-// You can specify any property from the node-postgres connection options
-export const db = drizzle({ 
-  connection: { 
-    connectionString: process.env.DATABASE_URL!,
-    ssl: false
-  }
+const pool = new Pool({
+  host: process.env.DB_HOST || 'localhost',
+  port: Number(process.env.DB_PORT) || 5432,
+  user: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || 'postgres',
+  database: process.env.POSTGRES_DB || 'librarie_db_desafio',
 });
+
+export const db = drizzle(pool, { schema });
