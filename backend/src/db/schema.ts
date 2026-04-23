@@ -1,4 +1,4 @@
-import { integer, pgTable, varchar, serial} from "drizzle-orm/pg-core";
+import { integer, pgTable, varchar, serial } from "drizzle-orm/pg-core";
 
 export const usersTable = pgTable("users", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -12,6 +12,6 @@ export const booksTable = pgTable("books", {
     author: varchar({ length: 255 }).notNull(),
     year: integer().notNull(),
     publisher: varchar({ length: 255 }).notNull(),
-    totalQuantity: integer("total_quantity").notNull().default(1),
-    availableQuantity: integer("available_quantity").notNull().default(1),
+    totalQuantity: integer("total_quantity").notNull().default(3),
+    availableQuantity: integer("available_quantity").notNull().default(3),
 });
