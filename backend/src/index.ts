@@ -16,6 +16,8 @@ app.get('/', (req, res) => {
   res.send('Biblioteca API running');
 });
 
+app.get('/health', (req, res) => res.sendStatus(200));
+
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });

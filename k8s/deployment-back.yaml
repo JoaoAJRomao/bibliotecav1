@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: 230398/lib-back:v1
+          image: 230398/lib-back:v1.1.2
           resources:
             requests:
               memory: "128Mi"
