@@ -122,7 +122,7 @@ kubectl delete pod <nome-do-pod-do-banco>
 
 ## 👥 Autores
 
-- [Seu Nome] - [Seu Email]
+- João Arthur Jeronimo Romão - 
 
 ## 📄 Licença
 

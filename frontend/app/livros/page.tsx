@@ -37,7 +37,7 @@ const BookSearch = () => {
     const carregarLivros = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/livros`);
+        const response = await fetch(`/api/livros`);
         const data = await response.json();
         setLivros(data);
       } catch (error) {
@@ -74,7 +74,7 @@ const BookSearch = () => {
 
     try {
       const method = editandoId ? "PUT" : "POST";
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/livros`, {
+      const response = await fetch(`/api/livros`, {
         method: method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(item),
@@ -129,7 +129,7 @@ const BookSearch = () => {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/livros?id=${id}`, {
+        const response = await fetch(`/api/livros?id=${id}`, {
           method: "DELETE",
         });
         if (response.ok) {
@@ -146,7 +146,7 @@ const BookSearch = () => {
   };
 
   const handleAlugar = async (id: number) => {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/livros/alugar`, {
+    const response = await fetch(`/api/livros/alugar`, {
       method: 'POST',
       body: JSON.stringify({ bookId: id })
     });

@@ -3,7 +3,6 @@ kind: Service
 metadata:
   name: db-service
 spec:
-  clusterIP: None
   selector:
     app: postgres
   ports:
