@@ -35,6 +35,7 @@ export async function POST(request: Request) {
       id: user.id,
       email: user.email,
       name: user.name,
+      role: user.role,
     })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       token,
-      user: { name: user.name, email: user.email },
+      user: { name: user.name, email: user.email, role: user.role },
     });
   } catch (error) {
     console.error("Erro na API de Login:", error);

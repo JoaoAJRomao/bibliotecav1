@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 
 export async function POST(request: Request) {
   try {
-    const { name, email, password } = await request.json();
+    const { name, email, password, role } = await request.json();
 
     const userExists = await db
       .select()
@@ -26,6 +26,7 @@ export async function POST(request: Request) {
       name,
       email,
       password: hashedPassword,
+      role: role || "user",
     });
 
     return NextResponse.json({ message: "Usuário criado com sucesso!" });

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '../../src/index';
 import { booksTable } from '../../src/db/schema';
 import { eq } from 'drizzle-orm';
+import { getSessionUser } from '../../src/utils/auth';
 
 export async function GET() {
     try {
@@ -15,12 +16,21 @@ export async function GET() {
 
 export async function POST(request: Request) {
     try {
+        const user = await getSessionUser(request);
+        if (!user) {
+            return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+        }
+        if (user.role !== "admin") {
+            return NextResponse.json({ error: "Acesso proibido" }, { status: 403 });
+        }
+
         const data = await request.json();
         const novoLivro = await db.insert(booksTable).values({
             title: data.title,
             author: data.author,
             year: parseInt(data.year),
-            publisher: data.publisher
+            publisher: data.publisher,
+            quantity: data.quantity !== undefined ? parseInt(data.quantity) : 1
         }).returning();
 
         return NextResponse.json(novoLivro[0]);
@@ -32,15 +42,29 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
     try {
+        const user = await getSessionUser(request);
+        if (!user) {
+            return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+        }
+        if (user.role !== "admin") {
+            return NextResponse.json({ error: "Acesso proibido" }, { status: 403 });
+        }
+
         const data = await request.json();
-        const { id, title, author, year, publisher } = data;
+        const { id, title, author, year, publisher, quantity } = data;
 
         if (!id) {
             return NextResponse.json({ error: "ID do livro é obrigatório" }, { status: 400 });
         }
 
         const [updateBook] = await db.update(booksTable)
-            .set({ title, author, year, publisher })
+            .set({ 
+                title, 
+                author, 
+                year: year !== undefined ? parseInt(year) : undefined, 
+                publisher,
+                quantity: quantity !== undefined ? parseInt(quantity) : undefined
+            })
             .where(eq(booksTable.id, id))
             .returning();
 
@@ -56,6 +80,14 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
     try {
+        const user = await getSessionUser(request);
+        if (!user) {
+            return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+        }
+        if (user.role !== "admin") {
+            return NextResponse.json({ error: "Acesso proibido" }, { status: 403 });
+        }
+
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
 
@@ -72,3 +104,4 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ error: "Erro interno ao deletar" }, { status: 500 });
     }
 }
+
