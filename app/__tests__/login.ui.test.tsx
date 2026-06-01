@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import Login from '../login';
+import Login from '../login/page';
 import { useRouter } from 'next/navigation';
 
 // Mock do useRouter do Next.js para evitar erros durante o teste

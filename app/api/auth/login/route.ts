@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { db } from "../../../src/index";
-import { usersTable } from "../../../src/db/schema";
+import { db } from "../../../../src/index";
+import { usersTable } from "../../../../src/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { SignJWT } from "jose";

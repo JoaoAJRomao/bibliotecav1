@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { db } from '../../../src/index';
-import { loansTable } from '../../../src/db/schema';
+import { db } from '../../../../src/index';
+import { loansTable } from '../../../../src/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
-import { getSessionUser } from '../../../src/utils/auth';
+import { getSessionUser } from '../../../../src/utils/auth';
 
 export async function POST(request: Request) {
     try {

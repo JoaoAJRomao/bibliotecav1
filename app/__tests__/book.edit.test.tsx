@@ -2,8 +2,8 @@
  * @vitest-environment node
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { db } from '../src/index';
-import { booksTable } from '../src/db/schema';
+import { db } from '../../src/index';
+import { booksTable } from '../../src/db/schema';
 import { eq } from 'drizzle-orm';
 import { PUT } from '../api/livros/route';
 import { SignJWT } from 'jose';

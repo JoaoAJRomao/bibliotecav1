@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { db } from '../../../src/index';
-import { booksTable, loansTable } from '../../../src/db/schema';
+import { db } from '../../../../src/index';
+import { booksTable, loansTable } from '../../../../src/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
-import { getSessionUser } from '../../../src/utils/auth';
+import { getSessionUser } from '../../../../src/utils/auth';
 
 export async function POST(request: Request) {
     try {
@@ -20,10 +20,7 @@ export async function POST(request: Request) {
         if (!bookId) {
             return NextResponse.json({ error: "ID do livro é obrigatório" }, { status: 400 });
         }
-
-        // Executar verificação e criação em uma transação de banco de dados
         const result = await db.transaction(async (tx) => {
-            // 1. Buscar o livro para obter a quantidade total cadastrada
             const [book] = await tx
                 .select()
                 .from(booksTable)

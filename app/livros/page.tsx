@@ -1,29 +1,34 @@
 "use client";
-import React, { useState, CSSProperties, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { BookData } from "../src/interfaces";
+import { BookData } from "../../src/interfaces";
 import Swal from "sweetalert2";
-import Cookies from 'js-cookie';
-import {
-  Search,
-  Book,
-  User,
-  Calendar,
-  Building2,
-  Plus,
-  X,
-  LogOut,
-  Pencil,
-  Trash2,
-  Loader2,
-} from "lucide-react";
+import Cookies from "js-cookie";
+import { Search, Plus, Loader2 } from "lucide-react";
+
+import { Navbar } from "../../src/components/Navbar";
+import { BookCard } from "../../src/components/BookCard";
+import { BookModal } from "../../src/components/BookModal";
+import { ActiveLoansList, ActiveLoan } from "../../src/components/ActiveLoansList";
+
+interface BookWithStock extends BookData {
+  quantity: number;
+  availableCopies: number;
+}
 
 const BookSearch = () => {
-  const [livros, setLivros] = useState<BookData[]>([]);
+  const [livros, setLivros] = useState<BookWithStock[]>([]);
   const [busca, setBusca] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
+  
+  // Dados do usuário logado
+  const [currentUser, setCurrentUser] = useState<{ name: string; role: string; id: number } | null>(null);
+  // Empréstimos ativos do usuário comum
+  const [activeLoans, setActiveLoans] = useState<ActiveLoan[]>([]);
+
   const router = useRouter();
 
   const [novoLivro, setNovoLivro] = useState({
@@ -31,28 +36,69 @@ const BookSearch = () => {
     autor: "",
     ano: "",
     editora: "",
+    quantidade: "1",
   });
 
+  // Carregar usuário e acervo
   useEffect(() => {
-    const carregarLivros = async () => {
+    const fetchSessionAndData = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/livros");
-        const data = await response.json();
-        setLivros(data);
+        // 1. Obter informações de sessão
+        const sessionResponse = await fetch("/api/auth/me");
+        if (!sessionResponse.ok) {
+          router.push("/");
+          return;
+        }
+        const sessionData = await sessionResponse.json();
+        setCurrentUser(sessionData.user);
+
+        // 2. Carregar livros
+        const booksResponse = await fetch("/api/livros");
+        const booksData = await booksResponse.json();
+        setLivros(booksData);
+
+        // 3. Se for usuário comum, carregar empréstimos ativos
+        if (sessionData.user.role === "user") {
+          const loansResponse = await fetch("/api/emprestimos");
+          if (loansResponse.ok) {
+            const loansData = await loansResponse.json();
+            setActiveLoans(loansData);
+          }
+        }
       } catch (error) {
-        console.error("Falha ao carregar livros:", error);
+        console.error("Falha ao inicializar dados:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    carregarLivros();
-  }, []);
+    fetchSessionAndData();
+  }, [router]);
+
+  // Atualizar acervo e empréstimos
+  const refreshData = async () => {
+    try {
+      const booksResponse = await fetch("/api/livros");
+      const booksData = await booksResponse.json();
+      setLivros(booksData);
+
+      if (currentUser?.role === "user") {
+        const loansResponse = await fetch("/api/emprestimos");
+        if (loansResponse.ok) {
+          const loansData = await loansResponse.json();
+          setActiveLoans(loansData);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar acervo:", error);
+    }
+  };
 
   const handleSaveBook = async (e: React.FormEvent) => {
     e.preventDefault();
     const anoParseado = parseInt(novoLivro.ano, 10);
+    const quantidadeParseada = parseInt(novoLivro.quantidade, 10);
 
     if (isNaN(anoParseado)) {
       Swal.fire({
@@ -64,12 +110,23 @@ const BookSearch = () => {
       return;
     }
 
+    if (isNaN(quantidadeParseada) || quantidadeParseada < 1) {
+      Swal.fire({
+        icon: "error",
+        title: "Estoque Inválido",
+        text: "Por favor, insira uma quantidade de estoque válida (mínimo 1).",
+        confirmButtonColor: "#2563eb",
+      });
+      return;
+    }
+
     const item = {
       ...(editandoId && { id: editandoId }),
       title: novoLivro.nome,
       author: novoLivro.autor,
       year: anoParseado,
       publisher: novoLivro.editora,
+      quantity: quantidadeParseada,
     };
 
     try {
@@ -81,16 +138,8 @@ const BookSearch = () => {
       });
 
       if (response.ok) {
-        const livroProcessado = await response.json();
-
-        if (editandoId) {
-          setLivros((prev) =>
-            prev.map((l) => (l.id === editandoId ? { ...l, ...livroProcessado } : l)),
-          );
-        } else {
-          setLivros((prev) => [...prev, livroProcessado]);
-        }
         fecharModal();
+        await refreshData();
         Swal.fire({
           icon: "success",
           title: editandoId ? "Atualizado!" : "Salvo!",
@@ -102,14 +151,15 @@ const BookSearch = () => {
           timerProgressBar: true,
         });
       } else {
-        throw new Error("Erro no servidor");
+        const err = await response.json();
+        throw new Error(err.error || "Erro no servidor");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro na requisição:", error);
       Swal.fire({
         icon: "error",
-        title: "Erro de conexão",
-        text: "Não foi possível conectar ao servidor.",
+        title: "Erro de gravação",
+        text: error.message || "Não foi possível salvar o livro.",
         confirmButtonColor: "#2563eb",
       });
     }
@@ -133,7 +183,7 @@ const BookSearch = () => {
           method: "DELETE",
         });
         if (response.ok) {
-          setLivros((prev) => prev.filter((l) => l.id !== id));
+          await refreshData();
           Swal.fire("Excluído!", "O livro foi removido.", "success");
         } else {
           Swal.fire("Erro", "Não foi possível excluir o livro.", "error");
@@ -145,363 +195,219 @@ const BookSearch = () => {
     }
   };
 
-  const livrosFiltrados = livros.filter((livro) =>
-    livro?.title?.toLowerCase().includes(busca.toLowerCase()),
-  );
+  const handleBorrowBook = async (bookId: number) => {
+    setActionLoadingId(bookId);
+    try {
+      const response = await fetch("/api/emprestimos/retirada", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookId }),
+      });
+
+      if (response.ok) {
+        await refreshData();
+        Swal.fire({
+          icon: "success",
+          title: "Empréstimo Confirmado!",
+          text: "Retirada de livro registrada com sucesso.",
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      } else {
+        const errData = await response.json();
+        Swal.fire({
+          icon: "error",
+          title: "Não foi possível emprestar",
+          text: errData.error || "Erro ao realizar empréstimo.",
+          confirmButtonColor: "#2563eb",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao pegar emprestado:", error);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleReturnBook = async (bookId: number) => {
+    setActionLoadingId(bookId);
+    try {
+      const response = await fetch("/api/emprestimos/devolucao", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookId }),
+      });
+
+      if (response.ok) {
+        await refreshData();
+        Swal.fire({
+          icon: "success",
+          title: "Devolução Confirmada!",
+          text: "Obrigado por devolver o livro no prazo.",
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      } else {
+        const errData = await response.json();
+        Swal.fire({
+          icon: "error",
+          title: "Erro na devolução",
+          text: errData.error || "Erro ao realizar devolução.",
+          confirmButtonColor: "#2563eb",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao devolver livro:", error);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
 
   const handleLogout = () => {
-    Cookies.remove('user_session');
+    Cookies.remove("user_session");
     router.push("/");
   };
 
   const fecharModal = () => {
     setIsModalOpen(false);
     setEditandoId(null);
-    setNovoLivro({ nome: "", autor: "", ano: "", editora: "" });
+    setNovoLivro({ nome: "", autor: "", ano: "", editora: "", quantidade: "1" });
   };
 
-  const handleOpenEdit = (livro: BookData) => {
+  const handleOpenEdit = (livro: BookWithStock) => {
     setNovoLivro({
       nome: livro.title,
       autor: livro.author,
       ano: livro.year.toString(),
       editora: livro.publisher,
+      quantidade: livro.quantity.toString(),
     });
     setEditandoId(livro.id);
     setIsModalOpen(true);
   };
 
+  const livrosFiltrados = livros.filter((livro) =>
+    livro?.title?.toLowerCase().includes(busca.toLowerCase())
+  );
+
+  const isBookBorrowed = (bookId: number) => {
+    return activeLoans.some((loan) => loan.bookId === bookId);
+  };
+
+  if (loading && !currentUser) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-neutral-50 dark:bg-neutral-950 font-sans">
+        <Loader2 size={48} className="animate-spin text-blue-600 dark:text-blue-400" />
+        <p className="text-neutral-500 dark:text-neutral-400 mt-4 font-medium animate-pulse">
+          Carregando ambiente da biblioteca...
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <div style={styles.topBar}>
-          <h1 style={styles.pageTitle}>Consulta de Acervo</h1>
-          <button onClick={handleLogout} style={styles.logoutButton}>
-            <LogOut size={20} />
-            <span>Sair</span>
-          </button>
-        </div>
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 font-sans transition-colors duration-200">
+      {currentUser && (
+        <Navbar
+          userName={currentUser.name}
+          userRole={currentUser.role}
+          onLogout={handleLogout}
+        />
+      )}
 
-        <div style={styles.searchBar}>
-          <Search size={20} style={styles.searchIcon} />
-          <input
-            type="text"
-            placeholder="Buscar por nome do livro..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            style={styles.searchInput}
-          />
-        </div>
-      </header>
-
-      <main style={styles.grid}>
-        {loading ? (
-          <div style={styles.loadingContainer}>
-            <Loader2 size={48} style={styles.spinner} />
-            <p style={{ color: "#4b5563", marginTop: "1rem" }}>
-              Carregando acervo...
-            </p>
-          </div>
-        ) : livrosFiltrados.length > 0 ? (
-          livrosFiltrados.map((livro) => (
-            <div key={livro.id} style={styles.card}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                }}
-              >
-                <div style={styles.bookIconWrapper}>
-                  <Book size={32} color="#2563eb" />
-                </div>
-
-                {/* Container para os botões de ação */}
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <button
-                    onClick={() => handleOpenEdit(livro)}
-                    style={styles.actionButton}
-                    title="Editar livro"
-                  >
-                    <Pencil size={18} />
-                  </button>
-
-                  <button
-                    onClick={() => handleDeleteBook(livro.id)}
-                    style={{ ...styles.actionButton, color: "#ef4444" }}
-                    title="Remover livro"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
-              <h3 style={styles.bookTitle}>{livro.title}</h3>
-              <div style={styles.infoRow}>
-                <User size={16} />
-                <span style={styles.infoText}>{livro.author}</span>
-              </div>
-              <div style={styles.infoRow}>
-                <Calendar size={16} />
-                <span style={styles.infoText}>{livro.year}</span>
-              </div>
-              <div style={styles.infoRow}>
-                <Building2 size={16} />
-                <span style={styles.infoText}>{livro.publisher}</span>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p style={{ color: "#4b5563", gridColumn: "1/-1" }}>
-            Nenhum livro encontrado.
-          </p>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Painel de Empréstimos Ativos do Leitor */}
+        {currentUser?.role === "user" && (
+          <section className="animate-fade-in">
+            <ActiveLoansList
+              loans={activeLoans}
+              onReturn={handleReturnBook}
+              actionLoadingId={actionLoadingId}
+            />
+          </section>
         )}
+
+        {/* Seção Acervo / Busca */}
+        <section className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-neutral-850 dark:text-neutral-100">
+                Consulta de Acervo
+              </h2>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+                Explore os livros físicos disponíveis para empréstimo
+              </p>
+            </div>
+
+            {/* Barra de Busca */}
+            <div className="relative w-full sm:max-w-xs flex items-center">
+              <Search
+                size={18}
+                className="absolute left-3 text-neutral-400 dark:text-neutral-500"
+              />
+              <input
+                type="text"
+                placeholder="Buscar por nome do livro..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm shadow-xs"
+              />
+            </div>
+          </div>
+
+          {/* Grid de Livros */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {livrosFiltrados.length > 0 ? (
+              livrosFiltrados.map((livro) => (
+                <BookCard
+                  key={livro.id}
+                  book={livro}
+                  userRole={currentUser?.role || "user"}
+                  hasActiveLoan={isBookBorrowed(livro.id)}
+                  onEdit={handleOpenEdit}
+                  onDelete={handleDeleteBook}
+                  onBorrow={handleBorrowBook}
+                  onReturn={handleReturnBook}
+                  actionLoading={actionLoadingId === livro.id}
+                />
+              ))
+            ) : (
+              <div className="col-span-full py-12 text-center text-neutral-500 dark:text-neutral-455 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl">
+                Nenhum livro encontrado no acervo.
+              </div>
+            )}
+          </div>
+        </section>
       </main>
 
-      <button
-        style={styles.fab}
-        onClick={() => {
-          setEditandoId(null);
-          setNovoLivro({ nome: "", autor: "", ano: "", editora: "" });
-          setIsModalOpen(true);
-        }}
-        title="Adicionar novo livro"
-      >
-        <Plus size={32} color="white" />
-      </button>
+      {/* FAB - Adicionar Livro (Apenas Admin) */}
+      {currentUser?.role === "admin" && (
+        <button
+          onClick={() => {
+            setEditandoId(null);
+            setNovoLivro({ nome: "", autor: "", ano: "", editora: "", quantidade: "1" });
+            setIsModalOpen(true);
+          }}
+          className="fixed bottom-6 right-6 sm:bottom-10 sm:right-10 bg-blue-600 hover:bg-blue-500 text-white p-4 sm:p-5 rounded-full shadow-lg shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all duration-200 z-30"
+          title="Adicionar novo livro"
+        >
+          <Plus size={28} />
+        </button>
+      )}
 
-      {isModalOpen && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <div style={styles.modalHeader}>
-              <h3 style={{ color: "#1f2937" }}>
-                {editandoId ? "Editar Livro" : "Cadastrar Novo Livro"}
-              </h3>
-              <button onClick={fecharModal} style={styles.closeButton}>
-                <X size={24} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveBook} style={styles.modalForm}>
-              <input
-                placeholder="Nome do Livro"
-                required
-                style={styles.modalInput}
-                value={novoLivro.nome}
-                onChange={(e) =>
-                  setNovoLivro({ ...novoLivro, nome: e.target.value })
-                }
-              />
-              <input
-                placeholder="Autor"
-                required
-                style={styles.modalInput}
-                value={novoLivro.autor}
-                onChange={(e) =>
-                  setNovoLivro({ ...novoLivro, autor: e.target.value })
-                }
-              />
-              <input
-                placeholder="Ano"
-                type="number"
-                required
-                style={styles.modalInput}
-                value={novoLivro.ano}
-                onChange={(e) =>
-                  setNovoLivro({ ...novoLivro, ano: e.target.value })
-                }
-              />
-              <input
-                placeholder="Editora"
-                required
-                style={styles.modalInput}
-                value={novoLivro.editora}
-                onChange={(e) =>
-                  setNovoLivro({ ...novoLivro, editora: e.target.value })
-                }
-              />
-              <button type="submit" style={styles.saveButton}>
-                {editandoId ? "Salvar Alterações" : "Salvar Livro"}
-              </button>
-            </form>
-          </div>
-        </div>
+      {/* Modal de Criação / Edição (Apenas Admin) */}
+      {currentUser?.role === "admin" && (
+        <BookModal
+          isOpen={isModalOpen}
+          onClose={fecharModal}
+          editandoId={editandoId}
+          novoLivro={novoLivro}
+          setNovoLivro={setNovoLivro}
+          onSave={handleSaveBook}
+        />
       )}
     </div>
   );
-};
-
-const styles: Record<string, CSSProperties> = {
-  container: {
-    padding: "2rem",
-    backgroundColor: "#f3f4f6",
-    minHeight: "100vh",
-    fontFamily: "sans-serif",
-    position: "relative",
-  },
-  header: {
-    marginBottom: "2rem",
-    maxWidth: "1200px",
-    margin: "0 auto 2rem auto",
-  },
-  pageTitle: { fontSize: "1.8rem", color: "#111827", marginBottom: "1rem" },
-  topBar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "1rem",
-  },
-  logoutButton: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-    backgroundColor: "#fee2e2",
-    color: "#dc2626",
-    border: "none",
-    padding: "0.5rem 1rem",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "bold",
-  },
-  searchBar: {
-    display: "flex",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    padding: "0.75rem 1rem",
-    borderRadius: "8px",
-    border: "1px solid #d1d5db",
-  },
-  searchIcon: { color: "#9ca3af", marginRight: "0.75rem" },
-  searchInput: {
-    border: "none",
-    outline: "none",
-    width: "100%",
-    fontSize: "1rem",
-    color: "#000",
-  },
-  grid: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "1.5rem",
-    justifyContent: "center",
-    maxWidth: "1200px",
-    margin: "0 auto",
-  },
-  card: {
-    backgroundColor: "#fff",
-    width: "250px",
-    padding: "1.5rem",
-    borderRadius: "12px",
-    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.5rem",
-  },
-  bookIconWrapper: {
-    backgroundColor: "#eff6ff",
-    width: "fit-content",
-    padding: "0.75rem",
-    borderRadius: "50%",
-    marginBottom: "1rem",
-  },
-  actionButton: {
-    border: "none",
-    background: "none",
-    cursor: "pointer",
-    color: "#6b7280",
-    padding: "4px",
-  },
-  bookTitle: {
-    fontSize: "1.1rem",
-    fontWeight: "bold",
-    color: "#1f2937",
-    minHeight: "2.5rem",
-  },
-  infoRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-    color: "#4b5563",
-  },
-  infoText: { fontSize: "0.9rem" },
-  fab: {
-    position: "fixed",
-    bottom: "40px",
-    right: "40px",
-    backgroundColor: "#2563eb",
-    width: "64px",
-    height: "64px",
-    borderRadius: "50%",
-    border: "none",
-    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.4)",
-    cursor: "pointer",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 100,
-  },
-  modalOverlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 200,
-  },
-  modalContent: {
-    backgroundColor: "white",
-    padding: "2rem",
-    borderRadius: "12px",
-    width: "100%",
-    maxWidth: "400px",
-  },
-  modalHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "1.5rem",
-  },
-  closeButton: {
-    border: "none",
-    background: "none",
-    cursor: "pointer",
-    color: "#6b7280",
-  },
-  modalForm: { display: "flex", flexDirection: "column", gap: "1rem" },
-  modalInput: {
-    padding: "0.75rem",
-    borderRadius: "6px",
-    border: "1px solid #d1d5db",
-    fontSize: "1rem",
-    color: "#000",
-  },
-  saveButton: {
-    backgroundColor: "#2563eb",
-    color: "white",
-    padding: "0.75rem",
-    borderRadius: "6px",
-    border: "none",
-    fontWeight: "bold",
-    cursor: "pointer",
-    marginTop: "1rem",
-  },
-  loadingContainer: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: "300px",
-    width: "100%",
-    gridColumn: "1 / -1",
-  },
-  spinner: {
-    animation: "spin 1s linear infinite",
-    display: "block",
-    color: "#2563eb",
-  },
 };
 
 export default BookSearch;

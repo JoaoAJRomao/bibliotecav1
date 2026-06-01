@@ -2,13 +2,14 @@
  * @vitest-environment node
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { db } from '../src/index';
-import { usersTable, booksTable, loansTable } from '../src/db/schema';
+import { db } from '../../src/index';
+import { usersTable, booksTable, loansTable } from '../../src/db/schema';
 import { eq, inArray } from 'drizzle-orm';
 import { POST as loginPOST } from '../api/auth/login/route';
-import { POST as booksPOST, PUT as booksPUT, DELETE as booksDELETE } from '../api/livros/route';
+import { POST as booksPOST, PUT as booksPUT, DELETE as booksDELETE, GET as booksGET } from '../api/livros/route';
 import { POST as loanPOST } from '../api/emprestimos/retirada/route';
 import { POST as returnPOST } from '../api/emprestimos/devolucao/route';
+import { GET as loansGET } from '../api/emprestimos/route';
 import { SignJWT } from 'jose';
 import bcrypt from 'bcryptjs';
 
@@ -266,6 +267,55 @@ describe('Integração: Controle de Perfis e Empréstimos', () => {
       expect(data.loan).toBeDefined();
       
       createdLoanIds.push(data.loan.id);
+    });
+
+    it('deve retornar a lista de livros contendo o saldo de cópias disponíveis (availableCopies)', async () => {
+      const response = await booksGET();
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(Array.isArray(data)).toBe(true);
+
+      const bookWithStock = data.find((b: any) => b.id === bookWithStockId);
+      const bookNoStock = data.find((b: any) => b.id === bookNoStockId);
+
+      expect(bookWithStock).toBeDefined();
+      expect(bookWithStock.availableCopies).toBe(0);
+
+      expect(bookNoStock).toBeDefined();
+      expect(bookNoStock.availableCopies).toBe(0);
+    });
+
+    it('deve retornar erro 401 ao buscar empréstimos ativos sem autenticação', async () => {
+      const request = new Request('http://localhost/api/emprestimos', {
+        method: 'GET',
+      });
+
+      const response = await loansGET(request);
+      expect(response.status).toBe(401);
+      const data = await response.json();
+      expect(data.error).toBe('Não autorizado');
+    });
+
+    it('deve retornar os empréstimos ativos do usuário logado', async () => {
+      const request = new Request('http://localhost/api/emprestimos', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${userToken}`,
+        },
+      });
+
+      const response = await loansGET(request);
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(Array.isArray(data)).toBe(true);
+      expect(data.length).toBeGreaterThan(0);
+
+      const loan = data.find((l: any) => l.bookId === bookWithStockId);
+      expect(loan).toBeDefined();
+      expect(loan.userId).toBe(regularUser.id);
+      expect(loan.returnedAt).toBeNull();
+      expect(loan.book).toBeDefined();
+      expect(loan.book.title).toBe('Livro com Estoque');
     });
   });
 });

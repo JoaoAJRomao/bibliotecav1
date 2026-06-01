@@ -1,13 +1,30 @@
 import { NextResponse } from 'next/server';
-import { db } from '../../src/index';
-import { booksTable } from '../../src/db/schema';
-import { eq } from 'drizzle-orm';
-import { getSessionUser } from '../../src/utils/auth';
+import { db } from '../../../src/index';
+import { booksTable, loansTable } from '../../../src/db/schema';
+import { eq, isNull } from 'drizzle-orm';
+import { getSessionUser } from '../../../src/utils/auth';
 
 export async function GET() {
     try {
         const todosLivros = await db.select().from(booksTable);
-        return NextResponse.json(todosLivros);
+        const activeLoans = await db.select({
+            bookId: loansTable.bookId,
+        }).from(loansTable).where(isNull(loansTable.returnedAt));
+
+        const activeLoanCounts: Record<number, number> = {};
+        for (const loan of activeLoans) {
+            activeLoanCounts[loan.bookId] = (activeLoanCounts[loan.bookId] || 0) + 1;
+        }
+
+        const livrosComSaldo = todosLivros.map(book => {
+            const activeCount = activeLoanCounts[book.id] || 0;
+            return {
+                ...book,
+                availableCopies: Math.max(0, book.quantity - activeCount),
+            };
+        });
+
+        return NextResponse.json(livrosComSaldo);
     } catch (error) {
         console.error("Erro ao buscar livros:", error);
         return NextResponse.json({ error: "Erro ao recuperar dados" }, { status: 500 });
