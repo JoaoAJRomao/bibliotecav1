@@ -46,6 +46,7 @@ test.describe("Fluxos de Livros e Empréstimos (Sucesso e Falha)", () => {
       const loanList = mainPage.activeLoansSection;
       await expect(loanList).toBeVisible();
       await expect(loanList.getByText(bookTitle)).toBeVisible();
+      await expect(loanList.getByText("Devolução até:")).toBeVisible();
 
       // Devolve o livro pela lista de empréstimos
       await mainPage.returnBookFromLoansList(bookTitle);
@@ -83,10 +84,11 @@ test.describe("Fluxos de Livros e Empréstimos (Sucesso e Falha)", () => {
       const bookYear = "2026";
       const bookPublisher = "E2E Publishing";
       const bookQty = "3";
+      const bookIsbn = "9788535914849";
 
       // 1. Cadastrar livro
       await mainPage.openAddBookModal();
-      await mainPage.fillBookForm(bookTitle, bookAuthor, bookYear, bookPublisher, bookQty);
+      await mainPage.fillBookForm(bookTitle, bookAuthor, bookYear, bookPublisher, bookQty, bookIsbn);
       await mainPage.saveBook();
 
       // Aguarda modal Swal de sucesso
@@ -99,6 +101,11 @@ test.describe("Fluxos de Livros e Empréstimos (Sucesso e Falha)", () => {
       await expect(card).toBeVisible();
       await expect(card.getByText(bookAuthor)).toBeVisible();
       await expect(card.getByText(`Disponível (3 de 3)`)).toBeVisible();
+      await expect(card.getByText("ISBN: 9788535914849")).toBeVisible();
+      
+      const img = card.locator("img");
+      await expect(img).toBeVisible();
+      await expect(img).toHaveAttribute("src", "https://covers.openlibrary.org/b/isbn/9788535914849-M.jpg");
 
       // 2. Editar livro
       await mainPage.openEditBookModal(bookTitle);

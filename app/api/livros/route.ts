@@ -42,12 +42,17 @@ export async function POST(request: Request) {
         }
 
         const data = await request.json();
+        const isbn = data.isbn ? String(data.isbn).trim() : null;
+        const imageUrl = isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg` : null;
+
         const novoLivro = await db.insert(booksTable).values({
             title: data.title,
             author: data.author,
             year: parseInt(data.year),
             publisher: data.publisher,
-            quantity: data.quantity !== undefined ? parseInt(data.quantity) : 1
+            quantity: data.quantity !== undefined ? parseInt(data.quantity) : 1,
+            isbn,
+            imageUrl
         }).returning();
 
         return NextResponse.json(novoLivro[0]);
@@ -68,10 +73,15 @@ export async function PUT(request: Request) {
         }
 
         const data = await request.json();
-        const { id, title, author, year, publisher, quantity } = data;
+        const { id, title, author, year, publisher, quantity, isbn } = data;
 
         if (!id) {
             return NextResponse.json({ error: "ID do livro é obrigatório" }, { status: 400 });
+        }
+
+        let imageUrl: string | undefined | null = undefined;
+        if (isbn !== undefined) {
+            imageUrl = isbn ? `https://covers.openlibrary.org/b/isbn/${String(isbn).trim()}-M.jpg` : null;
         }
 
         const [updateBook] = await db.update(booksTable)
@@ -80,7 +90,9 @@ export async function PUT(request: Request) {
                 author, 
                 year: year !== undefined ? parseInt(year) : undefined, 
                 publisher,
-                quantity: quantity !== undefined ? parseInt(quantity) : undefined
+                quantity: quantity !== undefined ? parseInt(quantity) : undefined,
+                isbn: isbn !== undefined ? (isbn ? String(isbn).trim() : null) : undefined,
+                imageUrl: imageUrl
             })
             .where(eq(booksTable.id, id))
             .returning();

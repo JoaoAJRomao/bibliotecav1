@@ -15,6 +15,8 @@ export const booksTable = pgTable("books", {
     year: integer().notNull(),
     publisher: varchar({ length: 255 }).notNull(),
     quantity: integer().default(1).notNull(), // Quantidade total de cópias
+    isbn: varchar({ length: 50 }),
+    imageUrl: varchar("image_url", { length: 1024 }),
 });
 
 export const loansTable = pgTable("loans", {
@@ -23,6 +25,7 @@ export const loansTable = pgTable("loans", {
     bookId: integer("book_id").notNull().references(() => booksTable.id, { onDelete: "cascade" }),
     borrowedAt: timestamp("borrowed_at").defaultNow().notNull(),
     returnedAt: timestamp("returned_at"),
+    dueDate: timestamp("due_date").defaultNow().notNull(),
 }, (table) => [
     index("loans_user_id_idx").on(table.userId),
     index("loans_book_id_returned_idx").on(table.bookId, table.returnedAt),

@@ -30,9 +30,28 @@ export const BookCard: React.FC<BookCardProps> = ({
     <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between h-[360px] group">
       <div>
         <div className="flex justify-between items-start mb-3">
-          <div className="p-3 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl transition-transform duration-300 group-hover:scale-105">
-            <Book size={28} />
-          </div>
+          {book.imageUrl ? (
+            <div className="w-[60px] h-[85px] relative rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-750 shadow-sm transition-transform duration-300 group-hover:scale-105 flex-shrink-0 bg-neutral-100 dark:bg-neutral-800">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={book.imageUrl}
+                alt={book.title}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const sibling = e.currentTarget.nextElementSibling;
+                  if (sibling) sibling.classList.remove('hidden');
+                }}
+              />
+              <div className="hidden w-full h-full flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <Book size={28} />
+              </div>
+            </div>
+          ) : (
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl transition-transform duration-300 group-hover:scale-105">
+              <Book size={28} />
+            </div>
+          )}
 
           {userRole === "admin" && (
             <div className="flex gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity duration-200">
@@ -78,6 +97,11 @@ export const BookCard: React.FC<BookCardProps> = ({
             <Building2 size={16} className="text-neutral-400" />
             <span className="truncate">{book.publisher}</span>
           </div>
+          {book.isbn && (
+            <div className="text-xs text-neutral-400 dark:text-neutral-500 pl-6 truncate">
+              ISBN: {book.isbn}
+            </div>
+          )}
         </div>
       </div>
 

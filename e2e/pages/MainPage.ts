@@ -49,12 +49,15 @@ export class MainPage {
     await this.addBookButton.click();
   }
 
-  async fillBookForm(title: string, author: string, year: string, publisher: string, quantity: string) {
+  async fillBookForm(title: string, author: string, year: string, publisher: string, quantity: string, isbn?: string) {
     await this.page.getByPlaceholder("Ex: Dom Casmurro").fill(title);
     await this.page.getByPlaceholder("Ex: Machado de Assis").fill(author);
     await this.page.getByPlaceholder("Ex: 1899").fill(year);
     await this.page.getByPlaceholder("Ex: Livraria Garnier").fill(publisher);
     await this.page.getByPlaceholder("Ex: 5").fill(quantity);
+    if (isbn !== undefined) {
+      await this.page.getByPlaceholder("Ex: 9788535914849").fill(isbn);
+    }
   }
 
   async saveBook() {

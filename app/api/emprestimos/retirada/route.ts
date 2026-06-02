@@ -55,12 +55,16 @@ export async function POST(request: Request) {
                 return { error: "Não há exemplares disponíveis deste livro no momento", status: 400 };
             }
 
-            // 5. Inserir o novo empréstimo
+            // 5. Inserir o novo empréstimo (com prazo padrão de 14 dias)
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 14);
+
             const [newLoan] = await tx
                 .insert(loansTable)
                 .values({
                     userId: user.id,
                     bookId: bookId,
+                    dueDate: dueDate,
                 })
                 .returning();
 

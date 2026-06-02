@@ -37,6 +37,7 @@ const BookSearch = () => {
     ano: "",
     editora: "",
     quantidade: "1",
+    isbn: "",
   });
 
   // Carregar usuário e acervo
@@ -127,6 +128,7 @@ const BookSearch = () => {
       year: anoParseado,
       publisher: novoLivro.editora,
       quantity: quantidadeParseada,
+      isbn: novoLivro.isbn,
     };
 
     try {
@@ -272,7 +274,7 @@ const BookSearch = () => {
   const fecharModal = () => {
     setIsModalOpen(false);
     setEditandoId(null);
-    setNovoLivro({ nome: "", autor: "", ano: "", editora: "", quantidade: "1" });
+    setNovoLivro({ nome: "", autor: "", ano: "", editora: "", quantidade: "1", isbn: "" });
   };
 
   const handleOpenEdit = (livro: BookWithStock) => {
@@ -282,6 +284,7 @@ const BookSearch = () => {
       ano: livro.year.toString(),
       editora: livro.publisher,
       quantidade: livro.quantity.toString(),
+      isbn: livro.isbn || "",
     });
     setEditandoId(livro.id);
     setIsModalOpen(true);
@@ -386,7 +389,7 @@ const BookSearch = () => {
         <button
           onClick={() => {
             setEditandoId(null);
-            setNovoLivro({ nome: "", autor: "", ano: "", editora: "", quantidade: "1" });
+            setNovoLivro({ nome: "", autor: "", ano: "", editora: "", quantidade: "1", isbn: "" });
             setIsModalOpen(true);
           }}
           className="fixed bottom-6 right-6 sm:bottom-10 sm:right-10 bg-blue-600 hover:bg-blue-500 text-white p-4 sm:p-5 rounded-full shadow-lg shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all duration-200 z-30"

@@ -24,6 +24,7 @@ export async function GET(request: Request) {
         bookId: loansTable.bookId,
         borrowedAt: loansTable.borrowedAt,
         returnedAt: loansTable.returnedAt,
+        dueDate: loansTable.dueDate,
         book: {
           id: booksTable.id,
           title: booksTable.title,
