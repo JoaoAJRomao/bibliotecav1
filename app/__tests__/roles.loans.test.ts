@@ -4,8 +4,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { db } from '../../src/index';
 import { usersTable, booksTable, loansTable } from '../../src/db/schema';
-import { eq, inArray } from 'drizzle-orm';
-import { POST as loginPOST } from '../api/auth/login/route';
+import { inArray } from 'drizzle-orm';
 import { POST as booksPOST, PUT as booksPUT, DELETE as booksDELETE, GET as booksGET } from '../api/livros/route';
 import { POST as loanPOST } from '../api/emprestimos/retirada/route';
 import { POST as returnPOST } from '../api/emprestimos/devolucao/route';
@@ -24,9 +23,15 @@ async function generateTestToken(user: { id: number, email: string, name: string
     .sign(SECRET_KEY);
 }
 
+interface TestUser {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+}
+
 describe('Integração: Controle de Perfis e Empréstimos', () => {
-  let adminUser: any;
-  let regularUser: any;
+  let regularUser: TestUser;
   let adminToken: string;
   let userToken: string;
 
@@ -47,7 +52,6 @@ describe('Integração: Controle de Perfis e Empréstimos', () => {
       password: hashedPassword,
       role: "admin",
     }).returning();
-    adminUser = admin;
     createdUserIds.push(admin.id);
 
     const [user] = await db.insert(usersTable).values({
@@ -275,8 +279,12 @@ describe('Integração: Controle de Perfis e Empréstimos', () => {
       const data = await response.json();
       expect(Array.isArray(data)).toBe(true);
 
-      const bookWithStock = data.find((b: any) => b.id === bookWithStockId);
-      const bookNoStock = data.find((b: any) => b.id === bookNoStockId);
+      interface BookResponse {
+        id: number;
+        availableCopies: number;
+      }
+      const bookWithStock = data.find((b: BookResponse) => b.id === bookWithStockId);
+      const bookNoStock = data.find((b: BookResponse) => b.id === bookNoStockId);
 
       expect(bookWithStock).toBeDefined();
       expect(bookWithStock.availableCopies).toBe(0);
@@ -310,7 +318,13 @@ describe('Integração: Controle de Perfis e Empréstimos', () => {
       expect(Array.isArray(data)).toBe(true);
       expect(data.length).toBeGreaterThan(0);
 
-      const loan = data.find((l: any) => l.bookId === bookWithStockId);
+      interface LoanResponse {
+        bookId: number;
+        userId: number;
+        returnedAt: string | null;
+        book: { title: string };
+      }
+      const loan = data.find((l: LoanResponse) => l.bookId === bookWithStockId);
       expect(loan).toBeDefined();
       expect(loan.userId).toBe(regularUser.id);
       expect(loan.returnedAt).toBeNull();

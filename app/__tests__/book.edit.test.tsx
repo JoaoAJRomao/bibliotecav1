@@ -62,7 +62,6 @@ describe('Integração: Edição de Livros', () => {
     });
 
     const response = await PUT(request);
-    const data = await response.json();
 
     expect(response.status).toBe(200);
 

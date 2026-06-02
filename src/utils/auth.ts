@@ -28,7 +28,7 @@ export async function getSessionUser(request?: Request): Promise<SessionUser | n
       try {
         const cookieStore = await cookies();
         token = cookieStore.get("user_session")?.value;
-      } catch (error) {
+      } catch {
         // Ignora erros de chamada fora do contexto de requisição (comum em testes do Vitest)
       }
     }
