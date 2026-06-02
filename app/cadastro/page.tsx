@@ -53,7 +53,7 @@ const Cadastro = () => {
           text: data.error,
         });
       }
-    } catch (error) {
+    } catch {
       Swal.fire({
         icon: "error",
         title: "Erro de conexão",

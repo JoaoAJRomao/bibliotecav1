@@ -19,13 +19,13 @@ test.describe("Autenticação e Cadastro (Cenários de Sucesso e Falha)", () => 
     await expect(page).toHaveURL(/.*\/livros/);
   });
 
-  test("deve exibir validação nativa de email vazio ao tentar logar sem preencher", async ({ page }) => {
+  test("deve exibir validação nativa de email vazio ao tentar logar sem preencher", async () => {
     await loginPage.login("", "");
     const emailInput = loginPage.emailInput;
     await expect(emailInput).toHaveJSProperty("validationMessage", "Please fill out this field.");
   });
 
-  test("deve exibir validação nativa de email inválido por ausência de domínio", async ({ page }) => {
+  test("deve exibir validação nativa de email inválido por ausência de domínio", async () => {
     await loginPage.emailInput.fill("e2eemail.com");
     await loginPage.loginButton.click();
     const emailInput = loginPage.emailInput;
@@ -35,7 +35,7 @@ test.describe("Autenticação e Cadastro (Cenários de Sucesso e Falha)", () => 
     );
   });
 
-  test("deve exibir validação nativa de senha vazia", async ({ page }) => {
+  test("deve exibir validação nativa de senha vazia", async () => {
     await loginPage.emailInput.fill("user@email.com");
     await loginPage.loginButton.click();
     const passwordInput = loginPage.passwordInput;

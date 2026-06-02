@@ -154,12 +154,13 @@ const BookSearch = () => {
         const err = await response.json();
         throw new Error(err.error || "Erro no servidor");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Erro na requisição:", error);
+      const errorMessage = error instanceof Error ? error.message : "Não foi possível salvar o livro.";
       Swal.fire({
         icon: "error",
         title: "Erro de gravação",
-        text: error.message || "Não foi possível salvar o livro.",
+        text: errorMessage,
         confirmButtonColor: "#2563eb",
       });
     }

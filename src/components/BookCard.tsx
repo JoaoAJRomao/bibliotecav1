@@ -7,7 +7,7 @@ export interface BookCardProps {
   book: BookData & { quantity: number; availableCopies: number };
   userRole: string;
   hasActiveLoan: boolean;
-  onEdit?: (book: any) => void;
+  onEdit?: (book: BookData & { quantity: number; availableCopies: number }) => void;
   onDelete?: (id: number) => void;
   onBorrow?: (id: number) => void;
   onReturn?: (id: number) => void;

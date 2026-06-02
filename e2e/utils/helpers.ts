@@ -1,5 +1,5 @@
 import { db } from "../../src/index";
-import { usersTable, booksTable, loansTable } from "../../src/db/schema";
+import { usersTable, booksTable } from "../../src/db/schema";
 import { sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
