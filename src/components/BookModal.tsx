@@ -12,6 +12,7 @@ export interface BookModalProps {
     ano: string;
     editora: string;
     quantidade: string;
+    isbn: string;
   };
   setNovoLivro: React.Dispatch<
     React.SetStateAction<{
@@ -20,6 +21,7 @@ export interface BookModalProps {
       ano: string;
       editora: string;
       quantidade: string;
+      isbn: string;
     }>
   >;
   onSave: (e: React.FormEvent) => void;
@@ -115,6 +117,19 @@ export const BookModal: React.FC<BookModalProps> = ({
                 onChange={(e) => setNovoLivro({ ...novoLivro, quantidade: e.target.value })}
               />
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-bold text-neutral-700 dark:text-neutral-300">
+              ISBN (Opcional)
+            </label>
+            <input
+              type="text"
+              placeholder="Ex: 9788535914849"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
+              value={novoLivro.isbn}
+              onChange={(e) => setNovoLivro({ ...novoLivro, isbn: e.target.value })}
+            />
           </div>
 
           <div className="space-y-1.5">

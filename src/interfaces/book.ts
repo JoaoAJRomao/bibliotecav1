@@ -6,6 +6,8 @@ export interface BookData {
   publisher: string;
   quantity: number;
   availableCopies?: number;
+  isbn?: string;
+  imageUrl?: string;
 }
 
 export type NewBook = Omit<BookData, 'id'>;

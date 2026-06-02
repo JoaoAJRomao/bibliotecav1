@@ -139,7 +139,8 @@ describe('Integração: Controle de Perfis e Empréstimos', () => {
           author: "Admin Sábio",
           year: 2026,
           publisher: "Editora Oficial",
-          quantity: 3
+          quantity: 3,
+          isbn: "9788535914849"
         }),
       });
 
@@ -147,6 +148,8 @@ describe('Integração: Controle de Perfis e Empréstimos', () => {
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data.title).toBe('Livro Criado por Admin');
+      expect(data.isbn).toBe('9788535914849');
+      expect(data.imageUrl).toBe('https://covers.openlibrary.org/b/isbn/9788535914849-M.jpg');
       
       // Adicionar id do livro criado na lista para limpeza
       createdBookIds.push(data.id);
@@ -321,7 +324,9 @@ describe('Integração: Controle de Perfis e Empréstimos', () => {
       interface LoanResponse {
         bookId: number;
         userId: number;
+        borrowedAt: string;
         returnedAt: string | null;
+        dueDate: string;
         book: { title: string };
       }
       const loan = data.find((l: LoanResponse) => l.bookId === bookWithStockId);
@@ -330,6 +335,9 @@ describe('Integração: Controle de Perfis e Empréstimos', () => {
       expect(loan.returnedAt).toBeNull();
       expect(loan.book).toBeDefined();
       expect(loan.book.title).toBe('Livro com Estoque');
+      expect(loan.borrowedAt).toBeDefined();
+      expect(loan.dueDate).toBeDefined();
+      expect(new Date(loan.dueDate).getTime()).toBeGreaterThan(new Date(loan.borrowedAt).getTime());
     });
   });
 });

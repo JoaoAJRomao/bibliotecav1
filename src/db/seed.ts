@@ -30,6 +30,8 @@ async function seed() {
       year: 1954,
       publisher: "Allen & Unwin",
       quantity: 5,
+      isbn: "9788578270698",
+      imageUrl: "https://covers.openlibrary.org/b/isbn/9788578270698-M.jpg"
     },
     {
       title: "1984 (Exemplar Único)",
@@ -37,6 +39,8 @@ async function seed() {
       year: 1949,
       publisher: "Secker & Warburg",
       quantity: 1,
+      isbn: "9788535914849",
+      imageUrl: "https://covers.openlibrary.org/b/isbn/9788535914849-M.jpg"
     },
     {
       title: "Livro Indisponível (Sem Estoque)",
@@ -44,6 +48,8 @@ async function seed() {
       year: 2020,
       publisher: "Editora Fantasma",
       quantity: 0,
+      isbn: null,
+      imageUrl: null
     }
   ]).onConflictDoNothing();
 

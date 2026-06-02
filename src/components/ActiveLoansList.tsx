@@ -8,6 +8,7 @@ export interface ActiveLoan {
   bookId: number;
   borrowedAt: string;
   returnedAt: string | null;
+  dueDate: string;
   book: {
     id: number;
     title: string;
@@ -41,6 +42,16 @@ export const ActiveLoansList: React.FC<ActiveLoansListProps> = ({
     }
   };
 
+  const isOverdue = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      const now = new Date();
+      return now > date;
+    } catch {
+      return false;
+    }
+  };
+
   if (loans.length === 0) {
     return (
       <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 text-center text-neutral-500 dark:text-neutral-400">
@@ -71,9 +82,24 @@ export const ActiveLoansList: React.FC<ActiveLoansListProps> = ({
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
                 Por {loan.book.author}
               </p>
-              <div className="flex items-center gap-1.5 text-xs text-neutral-400 dark:text-neutral-500 mt-3">
-                <Calendar size={14} />
-                <span>Retirado em: {formatDate(loan.borrowedAt)}</span>
+              <div className="flex flex-col gap-1 mt-3">
+                <div className="flex items-center gap-1.5 text-xs text-neutral-400 dark:text-neutral-500">
+                  <Calendar size={14} />
+                  <span>Retirado em: {formatDate(loan.borrowedAt)}</span>
+                </div>
+                <div className={`flex items-center gap-1.5 text-xs font-semibold ${
+                  isOverdue(loan.dueDate) 
+                    ? "text-red-500 dark:text-red-400" 
+                    : "text-blue-600 dark:text-blue-400"
+                }`}>
+                  <Calendar size={14} />
+                  <span>Devolução até: {formatDate(loan.dueDate)}</span>
+                  {isOverdue(loan.dueDate) && (
+                    <span className="text-[10px] px-1.5 py-0.5 bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 rounded-full font-bold uppercase tracking-wider animate-pulse">
+                      Atrasado
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
